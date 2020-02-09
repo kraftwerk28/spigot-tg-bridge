@@ -4,5 +4,13 @@ chats:
   - '-1001315822496'
   - '-1001419128681'
   - '-1001281720535'
-serverStartMessage: 'Server started'
-serverStopMessage: 'Server stopped'
+serverStartMessage: 'Server started.'
+serverStopMessage: 'Server stopped.'
+logJoinLeave: true
+logFromMCtoTG: true
+logFromTGtoMC: true
+strings:
+  online: '<b>Online:</b>'
+  nobodyOnline: '<b>Nobody online...</b>'
+  joined: 'joined'
+  left: 'left'
