@@ -10,7 +10,7 @@ class MessageListener(plugin: Plugin) : Listener {
     init { this.plugin = plugin }
 
     @EventHandler
-    public fun onPlayerChat1(event: AsyncPlayerChatEvent) {
+    fun onPlayerChat1(event: AsyncPlayerChatEvent) {
         plugin?.tgBot?.sendMessageToTGFrom(
             event.player.displayName,
             event.message

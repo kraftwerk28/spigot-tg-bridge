@@ -45,13 +45,13 @@ class Bot(plugin: Plugin) : TelegramLongPollingBot() {
         )
     }
 
-    public fun sendMessageToTGFrom(username: String, text: String) {
+    fun sendMessageToTGFrom(username: String, text: String) {
         allowedChats.forEach {
             execute(SendMessage(it, mcMessageStr(username, text)))
         }
     }
 
-    public fun broadcastToTG(text: String) {
+    fun broadcastToTG(text: String) {
         allowedChats.forEach {
             execute(SendMessage(it, text))
         }
