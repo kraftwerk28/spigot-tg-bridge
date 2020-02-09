@@ -1,0 +1,8 @@
+botToken: abcdef123456789
+botUsername: sample_username
+chats:
+  - '-1001315822496'
+  - '-1001419128681'
+  - '-1001281720535'
+serverStartMessage: 'Server started'
+serverStopMessage: 'Server stopped'

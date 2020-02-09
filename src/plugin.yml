@@ -1,0 +1,6 @@
+name: RZCraftBridge
+version: 0.0.1
+api-version: '1.15'
+main: org.kraftwerk28.rzcraft_bridge.Plugin
+description: Telegram <-> Minecraft communication plugin for RzaszkówCraft.
+load: STARTUP
