@@ -17,7 +17,11 @@ class Plugin : JavaPlugin(), Listener {
     private var chatToTG: Boolean = false
 
     override fun onEnable() {
-        if (!File("plugins/${name}/config.yml").exists()) {
+        val configFile = File(
+            server.pluginManager.getPlugin(name)!!.dataFolder,
+            "config.yml"
+        )
+        if (!configFile.exists()) {
             logger.warning("No config file found! Saving default one.")
             saveDefaultConfig()
             return
