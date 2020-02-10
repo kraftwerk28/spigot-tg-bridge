@@ -1,7 +1,6 @@
 package org.kraftwerk28.rzcraft_bridge
 
 import org.telegram.telegrambots.bots.TelegramLongPollingBot
-import org.telegram.telegrambots.meta.api.methods.BotApiMethod
 import org.telegram.telegrambots.meta.api.methods.ParseMode
 import org.telegram.telegrambots.meta.api.methods.groupadministration.GetChatAdministrators
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage
@@ -10,7 +9,7 @@ import org.telegram.telegrambots.meta.api.objects.Update
 import org.telegram.telegrambots.meta.api.objects.User
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException
 
-class Bot(var plugin: Plugin) : TelegramLongPollingBot() {
+class Bot(private var plugin: Plugin) : TelegramLongPollingBot() {
 
     private var allowedChats: List<Long> = plugin.config.getLongList("chats")
     private var chatToMC: Boolean =
@@ -45,7 +44,19 @@ class Bot(var plugin: Plugin) : TelegramLongPollingBot() {
             val text =
                 if (playerList.isNotEmpty()) "$onlineStr:\n$playerStr"
                 else offlineStr
-            reply(msg, text, { it.setParseMode(ParseMode.HTML) })
+            reply(msg, text) { it.replyToMessageId = msg.messageId }
+        }
+        if (msg.text.startsWith("/time")) {
+            val t = plugin.server.worlds[0].time
+            var text = when {
+                t <= 12000 -> "\uD83C\uDFDE Day"
+                t <= 13800 -> "\uD83C\uDF06 Sunset"
+                t <= 22200 -> "\uD83C\uDF03 Night"
+                t <= 24000 -> "\uD83C\uDF05 Sunrise"
+                else -> ""
+            }
+            text += " ($t)"
+            reply(msg, text) { it.replyToMessageId = msg.messageId }
         }
         // stop, if no command matched:
         if (msg.text!!.startsWith("/")) return
@@ -80,8 +91,8 @@ class Bot(var plugin: Plugin) : TelegramLongPollingBot() {
         text: String,
         prep: ((sender: SendMessage) -> Unit)? = null
     ): Message {
-        val snd = SendMessage(msg.chatId, text)
-        if (prep != null) { prep(snd) }
+        val snd = SendMessage(msg.chatId, text).setParseMode(ParseMode.HTML)
+        if (prep != null) prep(snd)
         return execute(snd)
     }
 
