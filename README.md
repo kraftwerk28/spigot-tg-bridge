@@ -8,8 +8,9 @@
 
 2. Choose one of below to configure plugin:
     1. Run Spigot server, plugin will log `"No config file found! Saving default one."`. After that, stop server and proceed to 3rd step.
-    
+
     **OR**
+
     2. Copy [config.yml](https://raw.githubusercontent.com/kraftwerk28/spigot-tg-bridge/master/src/main/resources/config.yml) to `plugins/SpigotTGBridge/` in your server directory.
 
 3. Modify `plugins/SpigotTGBridge/config.yml` with text editor, where each field is described in table below.
