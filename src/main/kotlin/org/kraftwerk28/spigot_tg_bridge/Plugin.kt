@@ -1,4 +1,4 @@
-package org.kraftwerk28.rzcraft_bridge
+package org.kraftwerk28.spigot_tg_bridge
 
 import com.vdurmont.emoji.EmojiParser
 import org.bukkit.event.EventHandler

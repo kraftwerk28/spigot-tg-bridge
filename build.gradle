@@ -5,9 +5,10 @@ plugins {
 }
 
 group 'org.kraftwerk28'
-version '1.0-SNAPSHOT'
-rootProject.libsDirName =
-        "$System.env.HOME/MinecraftServers/spigot_1.15.2/plugins/"
+version '0.0.4-SNAPSHOT'
+
+def defaultOutDir = "$System.env.HOME/MinecraftServers/spigot_1.15.2/plugins/"
+rootProject.libsDirName = System.getenv("OUT_DIR") ?: defaultOutDir
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8

@@ -1,4 +1,4 @@
-package org.kraftwerk28.rzcraft_bridge
+package org.kraftwerk28.spigot_tg_bridge
 
 import org.telegram.telegrambots.bots.TelegramLongPollingBot
 import org.telegram.telegrambots.meta.api.methods.ParseMode
