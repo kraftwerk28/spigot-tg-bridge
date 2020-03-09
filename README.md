@@ -18,7 +18,7 @@
 
 #### config.yml:
 | Field | Description | Type | Required | Default |
-| --- | --- | --- | --- | --- |
+|:-----:|:------------|:----:|:--------:|:-------:|
 | botToken | Telegram bot token ([How to create bot](https://core.telegram.org/bots#3-how-do-i-create-a-bot)) | string | :heavy_check_mark: | - |
 | botUsername | Telegram bot username | string | :heavy_check_mark: | - |
 | chats | Chats, where bot will work (to prevent using bot by unknown chats) | number[] | :heavy_check_mark: | [] |
@@ -30,7 +30,7 @@
 | strings | Dictionary of tokens - strings for plugin i18n | Map<string, string> | :x: | See default config |
 
 ## Commands:
-| Command | description |
-| --- | --- |
+| Command | Description |
+|:-------:|:------------|
 | `/online` | Get players, currently online |
-| `/time` | Get [time](https://minecraft.gamepedia.com/Day-night_cycle) on server |
+| `/time`   | Get [time](https://minecraft.gamepedia.com/Day-night_cycle) on server |
