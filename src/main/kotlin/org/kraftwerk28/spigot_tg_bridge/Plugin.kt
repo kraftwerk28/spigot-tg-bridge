@@ -68,7 +68,7 @@ class Plugin : JavaPlugin(), Listener {
     fun onPlayerJoin(event: PlayerJoinEvent) {
         if (config.getBoolean("logJoinLeave", false)) {
             val joinStr = config.getString("strings.joined", "joined")
-            tgBot?.broadcastToTG("${event.player.displayName} $joinStr.")
+            tgBot?.broadcastToTG("<b>${event.player.displayName}</b> $joinStr.")
         }
     }
 
@@ -76,7 +76,7 @@ class Plugin : JavaPlugin(), Listener {
     fun onPlayerLeave(event: PlayerQuitEvent) {
         if (config.getBoolean("logJoinLeave", false)) {
             val leftStr = config.getString("strings.left", "joined")
-            tgBot?.broadcastToTG("${event.player.displayName} $leftStr.")
+            tgBot?.broadcastToTG("<b>${event.player.displayName}</b> $leftStr.")
         }
     }
 }

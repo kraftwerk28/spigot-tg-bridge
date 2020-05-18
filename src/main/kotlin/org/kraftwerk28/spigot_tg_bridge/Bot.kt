@@ -23,6 +23,7 @@ class Bot(private var plugin: Plugin) : TelegramLongPollingBot() {
 
     override fun onUpdateReceived(update: Update?) {
         val msg = update?.message
+        plugin.logger.info("chat id: ${msg?.chatId}, message id: ${msg?.messageId}")
         if (msg == null || msg.text == null) return
         if (!allowedChats.contains(msg.chatId)) return
 
