@@ -1,11 +1,11 @@
 package org.kraftwerk28.spigot_tg_bridge
 
 import com.vdurmont.emoji.EmojiParser
-import org.bukkit.event.Listener
 import org.bukkit.plugin.java.JavaPlugin
 import org.telegram.telegrambots.ApiContextInitializer
 import org.telegram.telegrambots.meta.TelegramBotsApi
 import java.io.File
+import org.kraftwerk28.spigot_tg_bridge.Constants as C
 
 class Plugin : JavaPlugin() {
 
@@ -14,17 +14,20 @@ class Plugin : JavaPlugin() {
 
     init {
         config.run {
-            chatToTG = getBoolean("logFromMCtoTG", false)
+            chatToTG = getBoolean(
+                C.FIELDS.LOG_FROM_MC_TO_TG,
+                C.DEFS.logFromMCtoTG
+            )
         }
     }
 
     override fun onEnable() {
         val configFile = File(
             server.pluginManager.getPlugin(name)!!.dataFolder,
-            "config.yml"
+            C.configFilename
         )
         if (!configFile.exists()) {
-            logger.warning("No config file found! Saving default one.")
+            logger.warning(C.WARN.noConfigWarning)
             saveDefaultConfig()
             return
         }
@@ -38,15 +41,19 @@ class Plugin : JavaPlugin() {
         server.pluginManager.registerEvents(EventHandler(this), this)
 
         // Notify everything about server start
-        val startMsg = config.getString("serverStartMessage", null)
-        if (startMsg != null) tgBot?.broadcastToTG(startMsg)
-        logger.info("Plugin started")
+        config.getString(C.FIELDS.SERVER_START_MSG, null)?.let {
+            logger.info("Server start message: $it")
+            tgBot?.broadcastToTG(it)
+        }
+        logger.info("Plugin started.")
     }
 
     override fun onDisable() {
-        val stopMsg = config.getString("serverStopMessage", null)
-        if (stopMsg != null) tgBot?.broadcastToTG(stopMsg)
-        logger.info("Plugin stopped")
+        config.getString(C.FIELDS.SERVER_STOP_MSG, null)?.let {
+            logger.info("Server stop message: $it")
+            tgBot?.broadcastToTG(it)
+        }
+        logger.info("Plugin stopped.")
     }
 
     fun sendMessageToMC(text: String) {
@@ -55,7 +62,10 @@ class Plugin : JavaPlugin() {
     }
 
     fun sendMessageToMCFrom(username: String, text: String) {
-        val prep = EmojiParser.parseToAliases("<$username> $text")
-        server.broadcastMessage(prep)
+        val text = run {
+            val text = "<${escapeHTML(username)}> $text"
+            EmojiParser.parseToAliases(text)
+        }
+        server.broadcastMessage(text)
     }
 }

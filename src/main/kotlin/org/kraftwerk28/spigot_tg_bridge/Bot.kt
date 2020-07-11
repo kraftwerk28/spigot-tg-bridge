@@ -8,53 +8,54 @@ import org.telegram.telegrambots.meta.api.objects.Message
 import org.telegram.telegrambots.meta.api.objects.Update
 import org.telegram.telegrambots.meta.api.objects.User
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException
+import org.kraftwerk28.spigot_tg_bridge.Constants as C
 
 class Bot(private var plugin: Plugin) : TelegramLongPollingBot() {
-
     private val allowedChats: List<Long>
     private val chatToMC: Boolean
     private val botToken: String
     private val botUsername: String
+    private val cmd = Commands(plugin)
+
     init {
         plugin.config.run {
-            allowedChats = getLongList("chats")
-            chatToMC = getBoolean("logFromTGtoMC", false)
-            botToken = getString("botToken") ?: throw Exception("Bot token must be defined.")
-            botUsername = getString("botUsername") ?: throw Exception("Bot username must be defined.")
+            allowedChats = getLongList(C.FIELDS.ALLOWED_CHATS)
+            chatToMC = getBoolean(C.FIELDS.LOG_FROM_TG_TO_MC, C.DEFS.logFromTGtoMC)
+            botToken = getString(C.FIELDS.BOT_TOKEN) ?: throw Exception(C.WARN.noToken)
+            botUsername = getString(C.FIELDS.BOT_USERNAME) ?: throw Exception(C.WARN.noUsername)
         }
     }
 
     override fun getBotToken() = botToken
-
     override fun getBotUsername() = botUsername
 
     override fun onUpdateReceived(update: Update?) {
         val msg = update?.message
-        plugin.logger.info("chat id: ${msg?.chatId}, message id: ${msg?.messageId}")
+        plugin.logger.info("Chat id: ${msg?.chatId}, Message id: ${msg?.messageId}.")
         if (msg == null || msg.text == null) return
         if (!allowedChats.contains(msg.chatId)) return
 
         // cmd shows online players
-        if (msg.text.startsWith("/online")) {
+        if (msg.text.startsWith(cmd.online)) {
             val playerList = plugin.server.onlinePlayers
             val playerStr = plugin.server
                 .onlinePlayers
                 .mapIndexed { i, s -> "${i + 1}. ${s.displayName}" }
                 .joinToString("\n")
             val onlineStr = plugin.config.getString(
-                "strings.online",
-                "Online"
+                C.FIELDS.STRINGS.ONLINE,
+                C.DEFS.playersOnline
             )!!
             val offlineStr = plugin.config.getString(
-                "strings.nobodyOnline",
-                "Nobody online"
+                C.FIELDS.STRINGS.OFFLINE,
+                C.DEFS.nobodyOnline
             )!!
             val text =
                 if (playerList.isNotEmpty()) "$onlineStr:\n$playerStr"
                 else offlineStr
             reply(msg, text) { it.replyToMessageId = msg.messageId }
         }
-        if (msg.text.startsWith("/time")) {
+        if (msg.text.startsWith(cmd.time)) {
             val t = plugin.server.worlds[0].time
             var text = when {
                 t <= 12000 -> "\uD83C\uDFDE Day"
@@ -66,6 +67,7 @@ class Bot(private var plugin: Plugin) : TelegramLongPollingBot() {
             text += " ($t)"
             reply(msg, text) { it.replyToMessageId = msg.messageId }
         }
+
         // stop, if no command matched:
         if (msg.text!!.startsWith("/")) return
 
@@ -110,14 +112,10 @@ class Bot(private var plugin: Plugin) : TelegramLongPollingBot() {
     }
 
     private fun mcMessageStr(username: String, text: String): String =
-        "<i>$username</i>: $text"
+        "<b>$username</b>: $text"
 
     private fun rawUserMention(user: User): String =
         (if (user.firstName.length < 2) null else user.firstName)
             ?: user.userName
             ?: user.lastName
-
-    private fun telegramUserMention(user: User): String =
-        if (user.userName != null) "@${user.userName}"
-        else "<a href=\"tg://user?id=${user.id}\">${user.firstName ?: user.lastName}</a>"
 }

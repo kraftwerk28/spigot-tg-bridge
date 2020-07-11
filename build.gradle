@@ -7,15 +7,15 @@ plugins {
 group 'org.kraftwerk28'
 version '0.0.4-SNAPSHOT'
 
-def defaultOutDir = "$System.env.HOME/MinecraftServers/spigot_1.15.2/plugins/"
-rootProject.libsDirName = System.getenv("OUT_DIR") ?: defaultOutDir
-
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+//def defaultOutDir = "$System.env.HOME/MinecraftServers/spigot_1.15.2/plugins/"
+//rootProject.libsDirName = System.getenv("OUT_DIR") ?: defaultOutDir
 
 repositories {
     maven {
         url "https://hub.spigotmc.org/nexus/content/repositories/snapshots"
+    }
+    maven {
+        url "https://jitpack.io"
     }
     maven {
         url "https://oss.sonatype.org/content/repositories/snapshots/"
@@ -25,11 +25,13 @@ repositories {
 
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
-    testCompile group: 'junit', name: 'junit', version: '4.12'
+    testImplementation group: 'junit', name: 'junit', version: '4.12'
     compileOnly "org.spigotmc:spigot-api:1.15.2-R0.1-SNAPSHOT"
-    compile group: 'org.telegram', name: 'telegrambots', version: '4.6'
-    compile group: 'org.yaml', name: 'snakeyaml', version: '1.25'
-    compile 'com.vdurmont:emoji-java:5.1.1'
+    implementation group: 'org.telegram', name: 'telegrambots', version: '4.6'
+    implementation 'com.vdurmont:emoji-java:5.1.1'
+
+    def tgBotVer = '5.0.0'
+    implementation "io.github.kotlin-telegram-bot.kotlin-telegram-bot:telegram:$tgBotVer"
 }
 
 compileKotlin {

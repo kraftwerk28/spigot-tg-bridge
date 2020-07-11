@@ -5,6 +5,7 @@ import org.bukkit.event.Listener
 import org.bukkit.event.player.AsyncPlayerChatEvent
 import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerQuitEvent
+import org.kraftwerk28.spigot_tg_bridge.Constants as C
 
 class EventHandler(private val plugin: Plugin) : Listener {
 
@@ -14,9 +15,9 @@ class EventHandler(private val plugin: Plugin) : Listener {
 
     init {
         plugin.config.run {
-            joinStr = getString("strings.joined", "joined")!!
-            leftStr = getString("strings.left", "left")!!
-            logJoinLeave = getBoolean("logJoinLeave", false)
+            joinStr = getString(C.FIELDS.STRINGS.JOINED, C.DEFS.playerJoined)!!
+            leftStr = getString(C.FIELDS.STRINGS.LEFT, C.DEFS.playerLeft)!!
+            logJoinLeave = getBoolean(C.FIELDS.LOG_JOIN_LEAVE, C.DEFS.logJoinLeave)
         }
     }
 
@@ -24,7 +25,7 @@ class EventHandler(private val plugin: Plugin) : Listener {
     fun onPlayerChat(event: AsyncPlayerChatEvent) {
         if (plugin.chatToTG) {
             plugin.tgBot?.sendMessageToTGFrom(
-                event.player.displayName, event.message
+                escapeHTML(event.player.displayName), event.message
             )
         }
     }
@@ -32,16 +33,14 @@ class EventHandler(private val plugin: Plugin) : Listener {
     @EventHandler
     fun onPlayerJoin(event: PlayerJoinEvent) {
         if (!logJoinLeave) return
-        plugin.tgBot?.broadcastToTG(
-            "<b>${event.player.displayName}</b> $joinStr."
-        )
+        val text = "<b>${escapeHTML(event.player.displayName)}</b> $joinStr."
+        plugin.tgBot?.broadcastToTG(text)
     }
 
     @EventHandler
     fun onPlayerLeave(event: PlayerQuitEvent) {
         if (!logJoinLeave) return
-        plugin.tgBot?.broadcastToTG(
-            "<b>${event.player.displayName}</b> b $leftStr."
-        )
+        val text = "<b>${escapeHTML(event.player.displayName)}</b> $leftStr."
+        plugin.tgBot?.broadcastToTG(text)
     }
 }
