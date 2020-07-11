@@ -31,8 +31,8 @@ class EventHandler(private val plugin: Plugin) : Listener {
     @EventHandler
     fun onPlayerChat(event: AsyncPlayerChatEvent) {
         if (plugin.chatToTG) {
-            plugin.tgBot?.sendMessageToTGFrom(
-                escapeHTML(event.player.displayName), event.message
+            plugin.tgBot.sendMessageToTGFrom(
+                event.player.displayName, event.message
             )
         }
     }
@@ -40,15 +40,15 @@ class EventHandler(private val plugin: Plugin) : Listener {
     @EventHandler
     fun onPlayerJoin(event: PlayerJoinEvent) {
         if (!logJoinLeave) return
-        val text = "<b>${escapeHTML(event.player.displayName)}</b> $joinStr."
-        plugin.tgBot?.broadcastToTG(text)
+        val text = "<b>${TgBot.escapeHTML(event.player.displayName)}</b> $joinStr."
+        plugin.tgBot.broadcastToTG(text)
     }
 
     @EventHandler
     fun onPlayerLeave(event: PlayerQuitEvent) {
         if (!logJoinLeave) return
-        val text = "<b>${escapeHTML(event.player.displayName)}</b> $leftStr."
-        plugin.tgBot?.broadcastToTG(text)
+        val text = "<b>${TgBot.escapeHTML(event.player.displayName)}</b> $leftStr."
+        plugin.tgBot.broadcastToTG(text)
     }
 
     @EventHandler
@@ -57,7 +57,7 @@ class EventHandler(private val plugin: Plugin) : Listener {
         event.deathMessage?.let {
             val plName = event.entity.displayName
             val text = it.replace(plName, "<b>$plName</b>")
-            plugin.tgBot?.broadcastToTG(text)
+            plugin.tgBot.broadcastToTG(text)
         }
     }
 
@@ -66,6 +66,6 @@ class EventHandler(private val plugin: Plugin) : Listener {
         if (!logPlayerAsleep) return
         if (event.bedEnterResult != PlayerBedEnterEvent.BedEnterResult.OK) return
         val text = "<b>${event.player.displayName}</b> fell asleep."
-        plugin.tgBot?.broadcastToTG(text)
+        plugin.tgBot.broadcastToTG(text)
     }
 }

@@ -2,14 +2,12 @@ package org.kraftwerk28.spigot_tg_bridge
 
 import com.vdurmont.emoji.EmojiParser
 import org.bukkit.plugin.java.JavaPlugin
-import org.telegram.telegrambots.ApiContextInitializer
-import org.telegram.telegrambots.meta.TelegramBotsApi
 import java.io.File
 import org.kraftwerk28.spigot_tg_bridge.Constants as C
 
 class Plugin : JavaPlugin() {
 
-    var tgBot: Bot? = null
+    lateinit var tgBot: TgBot
     var chatToTG: Boolean = false
 
     init {
@@ -32,26 +30,19 @@ class Plugin : JavaPlugin() {
             return
         }
 
-        ApiContextInitializer.init()
-        val botsApi = TelegramBotsApi()
-        tgBot = Bot(this)
-
-        botsApi.registerBot(tgBot)
-
+        tgBot = TgBot(this)
         server.pluginManager.registerEvents(EventHandler(this), this)
 
         // Notify everything about server start
         config.getString(C.FIELDS.SERVER_START_MSG, null)?.let {
-            logger.info("Server start message: $it")
-            tgBot?.broadcastToTG(it)
+            tgBot.broadcastToTG(it)
         }
         logger.info("Plugin started.")
     }
 
     override fun onDisable() {
         config.getString(C.FIELDS.SERVER_STOP_MSG, null)?.let {
-            logger.info("Server stop message: $it")
-            tgBot?.broadcastToTG(it)
+            tgBot.broadcastToTG(it)
         }
         logger.info("Plugin stopped.")
     }
@@ -62,10 +53,10 @@ class Plugin : JavaPlugin() {
     }
 
     fun sendMessageToMCFrom(username: String, text: String) {
-        val text = run {
-            val text = "<${escapeHTML(username)}> $text"
-            EmojiParser.parseToAliases(text)
-        }
-        server.broadcastMessage(text)
+        server.broadcastMessage(
+            EmojiParser.parseToAliases(
+                "<${TgBot.escapeHTML(username)}> $text"
+            )
+        )
     }
 }

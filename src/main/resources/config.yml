@@ -15,5 +15,5 @@ strings:
   joined: 'joined'
   left: 'left'
 commands:
-  time: '/time'
-  online: '/online'
+  time: 'time'
+  online: 'online'
