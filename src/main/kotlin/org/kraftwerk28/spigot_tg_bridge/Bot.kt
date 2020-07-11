@@ -11,11 +11,18 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException
 
 class Bot(private var plugin: Plugin) : TelegramLongPollingBot() {
 
-    private var allowedChats: List<Long> = plugin.config.getLongList("chats")
-    private var chatToMC: Boolean =
-        plugin.config.getBoolean("logFromTGtoMC", false)
-    private var botToken: String = plugin.config.getString("botToken")!!
-    private var botUsername: String = plugin.config.getString("botUsername")!!
+    private val allowedChats: List<Long>
+    private val chatToMC: Boolean
+    private val botToken: String
+    private val botUsername: String
+    init {
+        plugin.config.run {
+            allowedChats = getLongList("chats")
+            chatToMC = getBoolean("logFromTGtoMC", false)
+            botToken = getString("botToken") ?: throw Exception("Bot token must be defined.")
+            botUsername = getString("botUsername") ?: throw Exception("Bot username must be defined.")
+        }
+    }
 
     override fun getBotToken() = botToken
 
