@@ -7,9 +7,13 @@ serverStopMessage: 'Server stopped.'
 logJoinLeave: true
 logFromMCtoTG: true
 logFromTGtoMC: true
+logPlayerDeath: false
+logPlayerAsleep: false
 strings:
   online: '<b>Online</b>'
   nobodyOnline: '<b>Nobody online...</b>'
   joined: 'joined'
   left: 'left'
-
+commands:
+  time: '/time'
+  online: '/online'

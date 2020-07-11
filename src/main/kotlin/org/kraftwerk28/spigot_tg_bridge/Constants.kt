@@ -12,6 +12,8 @@ object Constants {
         val SERVER_START_MSG = "serverStartMessage"
         val SERVER_STOP_MSG = "serverStopMessage"
         val LOG_JOIN_LEAVE = "logJoinLeave"
+        val LOG_PLAYER_DEATH = "logPlayerDeath"
+        val LOG_PLAYER_ASLEEP = "logPlayerAsleep"
         object STRINGS {
             val ONLINE = "strings.online"
             val OFFLINE = "strings.offline"
@@ -27,6 +29,8 @@ object Constants {
         val logFromMCtoTG = false
         val logFromTGtoMC = false
         val logJoinLeave = false
+        val logPlayerDeath = false
+        val logPlayerAsleep = false
         object COMMANDS {
             val TIME = "/time"
             val ONLINE = "/online"

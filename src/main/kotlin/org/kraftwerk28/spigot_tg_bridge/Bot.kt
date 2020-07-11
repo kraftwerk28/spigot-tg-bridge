@@ -87,9 +87,9 @@ class Bot(private var plugin: Plugin) : TelegramLongPollingBot() {
     }
 
     fun broadcastToTG(text: String) {
-        allowedChats.forEach {
+        allowedChats.forEach { chatID ->
             try {
-                val msg = SendMessage(it, text).setParseMode(ParseMode.HTML)
+                val msg = SendMessage(chatID, text).setParseMode(ParseMode.HTML)
                 execute(msg)
             } catch (e: TelegramApiException) {
             }
@@ -118,4 +118,8 @@ class Bot(private var plugin: Plugin) : TelegramLongPollingBot() {
         (if (user.firstName.length < 2) null else user.firstName)
             ?: user.userName
             ?: user.lastName
+
+    private fun telegramUserMention(user: User): String =
+        if (user.userName != null) "@${user.userName}"
+        else "<a href=\"tg://user?id=${user.id}\">${user.firstName ?: user.lastName}</a>"
 }

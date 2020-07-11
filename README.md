@@ -28,9 +28,15 @@
 | logJoinLeave | If true, plugin will send corresponding messages to chats, when player joins or leaves server | boolean | :x: | true |
 | logFromMCtoTG | If true, plugin will send messages from players on server, to Telegram chats | boolean | :x: | true |
 | logFromTGtoMC | If true, plugin will send messages from chats, to Minecraft server | boolean | :x: | true |
+| logPlayerDeath | If true, plugin will send message to Telegram if player died | boolean | :x: | false |
+| logPlayerAsleep | If true, plugin will send message to Telegram if player fell asleep | boolean | :x: | false |
 | strings | Dictionary of tokens - strings for plugin i18n | Map<string, string> | :x: | See default config |
+| commands | Dictionary of command text used in Telegram bot | Map<string, string> | :x: | See default config |
 
 ## Commands:
+
+Commands are customizeable through config, but there are default values for them as well
+
 | Command | Description |
 |:-------:|:------------|
 | `/online` | Get players, currently online |

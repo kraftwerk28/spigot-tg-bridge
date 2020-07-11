@@ -1,3 +1,14 @@
+import org.yaml.snakeyaml.Yaml
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath group: 'org.yaml', name: 'snakeyaml', version: '1.26'
+    }
+}
+
 plugins {
     id 'java'
     id 'org.jetbrains.kotlin.jvm' version '1.3.60'
@@ -5,10 +16,10 @@ plugins {
 }
 
 group 'org.kraftwerk28'
-version '0.0.4-SNAPSHOT'
-
-//def defaultOutDir = "$System.env.HOME/MinecraftServers/spigot_1.15.2/plugins/"
-//rootProject.libsDirName = System.getenv("OUT_DIR") ?: defaultOutDir
+def pluginConfigFile = new File("src/main/resources/plugin.yml").newInputStream()
+def cfg = (Map<String, Object>)new Yaml().load(pluginConfigFile)
+def v = cfg.get("version")
+version "$v-SNAPSHOT"
 
 repositories {
     maven {
@@ -23,6 +34,15 @@ repositories {
     mavenCentral()
 }
 
+def plugDir = "MinecraftServers/spigot_1.15.2/plugins/"
+def homeDir = System.properties['user.home']
+
+task cpArtifacts(type: Copy) {
+    from shadowJar
+    into "$homeDir/$plugDir"
+}
+shadowJar.finalizedBy cpArtifacts
+
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
     testImplementation group: 'junit', name: 'junit', version: '4.12'
@@ -30,8 +50,8 @@ dependencies {
     implementation group: 'org.telegram', name: 'telegrambots', version: '4.6'
     implementation 'com.vdurmont:emoji-java:5.1.1'
 
-    def tgBotVer = '5.0.0'
-    implementation "io.github.kotlin-telegram-bot.kotlin-telegram-bot:telegram:$tgBotVer"
+//    def tgBotVer = '5.0.0'
+//    implementation "io.github.kotlin-telegram-bot.kotlin-telegram-bot:telegram:$tgBotVer"
 }
 
 compileKotlin {
