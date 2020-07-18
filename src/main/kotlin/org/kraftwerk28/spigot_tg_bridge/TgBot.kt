@@ -9,6 +9,8 @@ import com.github.kotlintelegrambot.entities.ParseMode
 import com.github.kotlintelegrambot.entities.Update
 import com.github.kotlintelegrambot.entities.User
 import okhttp3.logging.HttpLoggingInterceptor
+import java.net.InetAddress
+import org.kraftwerk28.spigot_tg_bridge.Constants as C
 
 class TgBot(val plugin: Plugin) {
 
@@ -18,13 +20,22 @@ class TgBot(val plugin: Plugin) {
     private val chatToMC: Boolean
     private val botToken: String
     private val botUsername: String
+    private val allowWebhook: Boolean
+    private var webhookConfig: Map<String, Any>? = null
 
     init {
         plugin.config.run {
-            allowedChats = getLongList(Constants.FIELDS.ALLOWED_CHATS)
-            chatToMC = getBoolean(Constants.FIELDS.LOG_FROM_TG_TO_MC, Constants.DEFS.logFromTGtoMC)
-            botToken = getString(Constants.FIELDS.BOT_TOKEN) ?: throw Exception(Constants.WARN.noToken)
-            botUsername = getString(Constants.FIELDS.BOT_USERNAME) ?: throw Exception(Constants.WARN.noUsername)
+            allowedChats = getLongList(C.FIELDS.ALLOWED_CHATS)
+            chatToMC = getBoolean(C.FIELDS.LOG_FROM_TG_TO_MC, C.DEFS.logFromTGtoMC)
+            botToken = getString(C.FIELDS.BOT_TOKEN) ?: throw Exception(C.WARN.noToken)
+            botUsername = getString(C.FIELDS.BOT_USERNAME) ?: throw Exception(C.WARN.noUsername)
+            allowWebhook = getBoolean(C.FIELDS.USE_WEBHOOK, C.DEFS.useWebhook)
+
+            val whCfg = get(C.FIELDS.WEBHOOK_CONFIG)
+            if (whCfg is Map<*, *>) {
+                @Suppress("UNCHECKED_CAST")
+                webhookConfig = whCfg as Map<String, Any>?
+            }
         }
         val slashRegex = "^/+".toRegex()
 
@@ -32,21 +43,26 @@ class TgBot(val plugin: Plugin) {
             token = botToken
             logLevel = HttpLoggingInterceptor.Level.NONE
             dispatch {
-                text(null, ::onText)
                 command(commands.time.replace(slashRegex, ""), ::time)
                 command(commands.online.replace(slashRegex, ""), ::online)
+                text(null, ::onText)
             }
         }
-        bot.startPolling()
+        plugin.logger.info("Server address: ${InetAddress.getLocalHost().hostAddress}.")
+        webhookConfig?.let { config ->
+            plugin.logger.info("Running in webhook mode.")
+        } ?: run {
+            bot.startPolling()
+        }
     }
 
     private fun time(bot: Bot, update: Update) {
         val t = plugin.server.worlds[0].time
         var text = when {
-            t <= 12000 -> "\uD83C\uDFDE Day"
-            t <= 13800 -> "\uD83C\uDF06 Sunset"
-            t <= 22200 -> "\uD83C\uDF03 Night"
-            t <= 24000 -> "\uD83C\uDF05 Sunrise"
+            t <= 12000 -> C.TIMES_OF_DAY.day
+            t <= 13800 -> C.TIMES_OF_DAY.sunset
+            t <= 22200 -> C.TIMES_OF_DAY.night
+            t <= 24000 -> C.TIMES_OF_DAY.sunrise
             else -> ""
         }
         text += " ($t)"
@@ -65,12 +81,12 @@ class TgBot(val plugin: Plugin) {
             .mapIndexed { i, s -> "${i + 1}. ${s.displayName}" }
             .joinToString("\n")
         val onlineStr = plugin.config.getString(
-            Constants.FIELDS.STRINGS.ONLINE,
-            Constants.DEFS.playersOnline
+            C.FIELDS.STRINGS.ONLINE,
+            C.DEFS.playersOnline
         )!!
         val offlineStr = plugin.config.getString(
-            Constants.FIELDS.STRINGS.OFFLINE,
-            Constants.DEFS.nobodyOnline
+            C.FIELDS.STRINGS.OFFLINE,
+            C.DEFS.nobodyOnline
         )!!
         val text =
             if (playerList.isNotEmpty()) "$onlineStr:\n$playerStr"
@@ -102,6 +118,7 @@ class TgBot(val plugin: Plugin) {
     private fun onText(bot: Bot, update: Update) {
         if (!chatToMC) return
         val msg = update.message!!
+        if (msg.text!!.startsWith("/")) return // Suppress command forwarding
         plugin.sendMessageToMCFrom(rawUserMention(msg.from!!), msg.text!!)
     }
 

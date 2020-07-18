@@ -25,7 +25,6 @@ class EventHandler(private val plugin: Plugin) : Listener {
             logDeathMessage = getBoolean(C.FIELDS.LOG_PLAYER_DEATH, C.DEFS.logPlayerDeath)
             logPlayerAsleep = getBoolean(C.FIELDS.LOG_PLAYER_ASLEEP, C.DEFS.logPlayerAsleep)
         }
-        plugin.logger.info("Log death message: $logDeathMessage")
     }
 
     @EventHandler

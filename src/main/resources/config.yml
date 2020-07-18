@@ -1,3 +1,4 @@
+enable: true
 botToken: abcdef123456789
 botUsername: sample_username
 chats:
@@ -9,6 +10,7 @@ logFromMCtoTG: true
 logFromTGtoMC: true
 logPlayerDeath: false
 logPlayerAsleep: false
+telegramMessageFormat: '<%player%>: %message%'
 strings:
   online: '<b>Online</b>'
   nobodyOnline: '<b>Nobody online...</b>'

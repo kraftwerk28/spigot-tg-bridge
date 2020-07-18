@@ -1,6 +1,7 @@
 package org.kraftwerk28.spigot_tg_bridge
 
 import com.vdurmont.emoji.EmojiParser
+import org.bukkit.ChatColor
 import org.bukkit.plugin.java.JavaPlugin
 import java.io.File
 import org.kraftwerk28.spigot_tg_bridge.Constants as C
@@ -8,7 +9,9 @@ import org.kraftwerk28.spigot_tg_bridge.Constants as C
 class Plugin : JavaPlugin() {
 
     lateinit var tgBot: TgBot
-    var chatToTG: Boolean = false
+    val chatToTG: Boolean
+    var _isEnabled: Boolean = false
+    val telegramMessageFormat: String
 
     init {
         config.run {
@@ -16,10 +19,16 @@ class Plugin : JavaPlugin() {
                 C.FIELDS.LOG_FROM_MC_TO_TG,
                 C.DEFS.logFromMCtoTG
             )
+            _isEnabled = getBoolean(C.FIELDS.ENABLE, C.DEFS.enable)
+            telegramMessageFormat = getString(
+                C.FIELDS.TELEGRAM_MESSAGE_FORMAT,
+                C.DEFS.telegramMessageFormat
+            )!!
         }
     }
 
     override fun onEnable() {
+        if (!_isEnabled) return
         val configFile = File(
             server.pluginManager.getPlugin(name)!!.dataFolder,
             C.configFilename
@@ -41,6 +50,7 @@ class Plugin : JavaPlugin() {
     }
 
     override fun onDisable() {
+        if (!_isEnabled) return
         config.getString(C.FIELDS.SERVER_STOP_MSG, null)?.let {
             tgBot.broadcastToTG(it)
         }
@@ -53,10 +63,11 @@ class Plugin : JavaPlugin() {
     }
 
     fun sendMessageToMCFrom(username: String, text: String) {
-        server.broadcastMessage(
-            EmojiParser.parseToAliases(
-                "<${TgBot.escapeHTML(username)}> $text"
-            )
-        )
+        val prepared = telegramMessageFormat
+            .replace(C.USERNAME_PLACEHOLDER, emojiEsc(username))
+            .replace(C.MESSAGE_TEXT_PLACEHOLDER, emojiEsc(text))
+        server.broadcastMessage(prepared)
     }
+
+    fun emojiEsc(text: String) = EmojiParser.parseToAliases(text)
 }
