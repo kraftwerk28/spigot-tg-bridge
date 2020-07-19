@@ -1,57 +1,42 @@
 package org.kraftwerk28.spigot_tg_bridge
 
 import com.vdurmont.emoji.EmojiParser
-import org.bukkit.ChatColor
 import org.bukkit.plugin.java.JavaPlugin
-import java.io.File
+import java.lang.Exception
 import org.kraftwerk28.spigot_tg_bridge.Constants as C
 
 class Plugin : JavaPlugin() {
 
     lateinit var tgBot: TgBot
-    val chatToTG: Boolean
-    var _isEnabled: Boolean = false
-    val telegramMessageFormat: String
-
-    init {
-        config.run {
-            chatToTG = getBoolean(
-                C.FIELDS.LOG_FROM_MC_TO_TG,
-                C.DEFS.logFromMCtoTG
-            )
-            _isEnabled = getBoolean(C.FIELDS.ENABLE, C.DEFS.enable)
-            telegramMessageFormat = getString(
-                C.FIELDS.TELEGRAM_MESSAGE_FORMAT,
-                C.DEFS.telegramMessageFormat
-            )!!
-        }
-    }
+    lateinit var config: Configuration
 
     override fun onEnable() {
-        if (!_isEnabled) return
-        val configFile = File(
-            server.pluginManager.getPlugin(name)!!.dataFolder,
-            C.configFilename
-        )
-        if (!configFile.exists()) {
+        try {
+            config = Configuration(this)
+        } catch (e: Exception) {
             logger.warning(C.WARN.noConfigWarning)
-            saveDefaultConfig()
             return
         }
 
-        tgBot = TgBot(this)
-        server.pluginManager.registerEvents(EventHandler(this), this)
+        if (!config.isEnabled) return
 
-        // Notify everything about server start
-        config.getString(C.FIELDS.SERVER_START_MSG, null)?.let {
+        val cmdHandler = CommandHandler(this)
+        val eventHandler = EventHandler(this, config)
+
+        tgBot = TgBot(this, config)
+        getCommand(C.COMMANDS.PLUGIN_RELOAD)?.setExecutor(cmdHandler)
+        server.pluginManager.registerEvents(eventHandler, this)
+
+        // Notify Telegram groups about server start
+        config.serverStartMessage?.let {
             tgBot.broadcastToTG(it)
         }
         logger.info("Plugin started.")
     }
 
     override fun onDisable() {
-        if (!_isEnabled) return
-        config.getString(C.FIELDS.SERVER_STOP_MSG, null)?.let {
+        if (!config.isEnabled) return
+        config.serverStopMessage?.let {
             tgBot.broadcastToTG(it)
         }
         logger.info("Plugin stopped.")
@@ -63,11 +48,19 @@ class Plugin : JavaPlugin() {
     }
 
     fun sendMessageToMCFrom(username: String, text: String) {
-        val prepared = telegramMessageFormat
+        val prepared = config.telegramMessageFormat
             .replace(C.USERNAME_PLACEHOLDER, emojiEsc(username))
             .replace(C.MESSAGE_TEXT_PLACEHOLDER, emojiEsc(text))
         server.broadcastMessage(prepared)
     }
 
     fun emojiEsc(text: String) = EmojiParser.parseToAliases(text)
+
+    fun reload() {
+        logger.info(C.INFO.reloading)
+        config.reload(this)
+        tgBot.stop()
+        tgBot.start(this, config)
+        logger.info(C.INFO.reloadComplete)
+    }
 }

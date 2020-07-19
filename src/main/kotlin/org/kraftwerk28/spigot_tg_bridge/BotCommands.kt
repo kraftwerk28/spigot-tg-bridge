@@ -1,20 +1,14 @@
 package org.kraftwerk28.spigot_tg_bridge
 
-import org.kraftwerk28.spigot_tg_bridge.Constants as C
+import org.bukkit.configuration.file.YamlConfiguration
 
-class Commands(plugin: Plugin) {
+class Commands(yamlCfg: YamlConfiguration) {
     val time: String
     val online: String
     init {
-        plugin.config.run {
-            time = getString(
-                C.FIELDS.COMMANDS.TIME,
-                C.DEFS.COMMANDS.TIME
-            )!!
-            online = getString(
-                C.FIELDS.COMMANDS.ONLINE,
-                C.DEFS.COMMANDS.ONLINE
-            )!!
+        yamlCfg.run {
+            time = getString("commands.time", "time")!!
+            online = getString("commands.online", "online")!!
         }
     }
 }

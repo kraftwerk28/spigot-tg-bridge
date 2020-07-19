@@ -18,8 +18,7 @@ plugins {
 group 'org.kraftwerk28'
 def pluginConfigFile = new File("src/main/resources/plugin.yml").newInputStream()
 def cfg = (Map<String, Object>)new Yaml().load(pluginConfigFile)
-def v = cfg.get("version")
-version "$v-SNAPSHOT"
+version cfg.get("version")
 
 repositories {
     maven {
@@ -41,6 +40,10 @@ def homeDir = System.properties['user.home']
 task cpArtifacts(type: Copy) {
     from shadowJar
     into "$homeDir/$plugDir"
+}
+
+shadowJar {
+    archiveClassifier = null
 }
 shadowJar.finalizedBy cpArtifacts
 

@@ -12,35 +12,20 @@ import okhttp3.logging.HttpLoggingInterceptor
 import java.net.InetAddress
 import org.kraftwerk28.spigot_tg_bridge.Constants as C
 
-class TgBot(val plugin: Plugin) {
+class TgBot(private val plugin: Plugin, private val config: Configuration) {
 
-    private val commands = Commands(plugin)
-    private val bot: Bot
-    private val allowedChats: List<Long>
-    private val chatToMC: Boolean
-    private val botToken: String
-    private val botUsername: String
-    private val allowWebhook: Boolean
-    private var webhookConfig: Map<String, Any>? = null
+    private lateinit var bot: Bot
 
     init {
-        plugin.config.run {
-            allowedChats = getLongList(C.FIELDS.ALLOWED_CHATS)
-            chatToMC = getBoolean(C.FIELDS.LOG_FROM_TG_TO_MC, C.DEFS.logFromTGtoMC)
-            botToken = getString(C.FIELDS.BOT_TOKEN) ?: throw Exception(C.WARN.noToken)
-            botUsername = getString(C.FIELDS.BOT_USERNAME) ?: throw Exception(C.WARN.noUsername)
-            allowWebhook = getBoolean(C.FIELDS.USE_WEBHOOK, C.DEFS.useWebhook)
+        start(plugin, config)
+    }
 
-            val whCfg = get(C.FIELDS.WEBHOOK_CONFIG)
-            if (whCfg is Map<*, *>) {
-                @Suppress("UNCHECKED_CAST")
-                webhookConfig = whCfg as Map<String, Any>?
-            }
-        }
+    fun start(plugin: Plugin, config: Configuration) {
         val slashRegex = "^/+".toRegex()
+        val commands = config.commands
 
         bot = bot {
-            token = botToken
+            token = config.botToken
             logLevel = HttpLoggingInterceptor.Level.NONE
             dispatch {
                 command(commands.time.replace(slashRegex, ""), ::time)
@@ -48,25 +33,39 @@ class TgBot(val plugin: Plugin) {
                 text(null, ::onText)
             }
         }
+        skipUpdates()
         plugin.logger.info("Server address: ${InetAddress.getLocalHost().hostAddress}.")
-        webhookConfig?.let { config ->
+        config.webhookConfig?.let { _ ->
             plugin.logger.info("Running in webhook mode.")
         } ?: run {
             bot.startPolling()
         }
     }
 
+    fun stop() {
+        bot.stopPolling()
+    }
+
     private fun time(bot: Bot, update: Update) {
-        val t = plugin.server.worlds[0].time
-        var text = when {
+        val msg = update.message!!
+        if (plugin.server.worlds.isEmpty()) {
+            bot.sendMessage(
+                msg.chat.id,
+                "No worlds available",
+                replyToMessageId = msg.messageId
+            )
+            return
+        }
+
+        val t = plugin.server.worlds.first().time
+        val text = when {
             t <= 12000 -> C.TIMES_OF_DAY.day
             t <= 13800 -> C.TIMES_OF_DAY.sunset
             t <= 22200 -> C.TIMES_OF_DAY.night
             t <= 24000 -> C.TIMES_OF_DAY.sunrise
             else -> ""
-        }
-        text += " ($t)"
-        val msg = update.message!!
+        } + " ($t)"
+
         bot.sendMessage(
             msg.chat.id, text,
             replyToMessageId = msg.messageId,
@@ -80,17 +79,9 @@ class TgBot(val plugin: Plugin) {
             .onlinePlayers
             .mapIndexed { i, s -> "${i + 1}. ${s.displayName}" }
             .joinToString("\n")
-        val onlineStr = plugin.config.getString(
-            C.FIELDS.STRINGS.ONLINE,
-            C.DEFS.playersOnline
-        )!!
-        val offlineStr = plugin.config.getString(
-            C.FIELDS.STRINGS.OFFLINE,
-            C.DEFS.nobodyOnline
-        )!!
         val text =
-            if (playerList.isNotEmpty()) "$onlineStr:\n$playerStr"
-            else offlineStr
+            if (playerList.isNotEmpty()) "${config.onlineString}:\n$playerStr"
+            else config.nobodyOnlineString
         val msg = update.message!!
         bot.sendMessage(
             msg.chat.id, text,
@@ -100,13 +91,13 @@ class TgBot(val plugin: Plugin) {
     }
 
     fun broadcastToTG(text: String) {
-        allowedChats.forEach { chatID ->
+        config.allowedChats.forEach { chatID ->
             bot.sendMessage(chatID, text, parseMode = ParseMode.HTML)
         }
     }
 
     fun sendMessageToTGFrom(username: String, text: String) {
-        allowedChats.forEach { chatID ->
+        config.allowedChats.forEach { chatID ->
             bot.sendMessage(
                 chatID,
                 mcMessageStr(username, text),
@@ -116,7 +107,7 @@ class TgBot(val plugin: Plugin) {
     }
 
     private fun onText(bot: Bot, update: Update) {
-        if (!chatToMC) return
+        if (!config.logFromTGtoMC) return
         val msg = update.message!!
         if (msg.text!!.startsWith("/")) return // Suppress command forwarding
         plugin.sendMessageToMCFrom(rawUserMention(msg.from!!), msg.text!!)
@@ -129,6 +120,16 @@ class TgBot(val plugin: Plugin) {
         (if (user.firstName.length < 2) null else user.firstName)
             ?: user.username
             ?: user.lastName!!
+
+    private fun skipUpdates(lastUpdateID: Long = 0) {
+        val newUpdates = bot.getUpdates(lastUpdateID)
+
+        if (newUpdates.isNotEmpty()) {
+            val lastUpd = newUpdates.last()
+            if (lastUpd !is Update) return
+            return skipUpdates(lastUpd.updateId + 1)
+        }
+    }
 
     companion object {
         fun escapeHTML(s: String): String =

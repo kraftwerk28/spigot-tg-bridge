@@ -22,7 +22,7 @@
 |:-----:|:------------|:----:|:--------:|:-------:|
 | enable | If plugin should be enabled | `boolean` | :x: | `true` |
 | botToken | Telegram bot token ([How to create bot](https://core.telegram.org/bots#3-how-do-i-create-a-bot)) | `string` | :heavy_check_mark: | - |
-| botUsername | Telegram bot username | string | :heavy_check_mark: | - |
+| botUsername | Telegram bot username | `string` | :heavy_check_mark: | - |
 | chats | Chats, where bot will work (to prevent using bot by unknown chats) | `number[] or string[]` | :heavy_check_mark: | `[]` |
 | serverStartMessage | What will be sent to chats when server starts | `string` | :x: | `'Server started.'` |
 | serverStopMessage | What will be sent to chats when server stops | `string` | :x: | `'Server stopped.'` |
@@ -35,7 +35,7 @@
 | commands | Dictionary of command text used in Telegram bot | `Map<string, string>` | :x: | See default config |
 | telegramMessageFormat | Format string for TGtoMC chat message | `string` | :x: | See default config |
 
-## Commands:
+## Telegram bot commands:
 
 Commands are customizeable through config, but there are default values for them as well
 
@@ -49,3 +49,9 @@ Must contain `%username%` and `%message` inside.
 You can customize message color with it. See [message color codes](https://www.digminecraft.com/lists/color_list_pc.php).
 
 P. S.: related to [this issue](https://github.com/kraftwerk28/spigot-tg-bridge/issues/6)
+
+## Plugin commands:
+
+| Command | Description |
+|:-------:|:------------|
+| `/tgbridge_reload` | Reload plugin configuration w/o need to stop the server. Works only through server console |
