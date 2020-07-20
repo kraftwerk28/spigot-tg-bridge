@@ -43,6 +43,7 @@ Commands are customizeable through config, but there are default values for them
 |:-------:|:------------|
 | `/online` | Get players, currently online |
 | `/time`   | Get [time](https://minecraft.gamepedia.com/Day-night_cycle) on server |
+| `/chat_id`   | Get current chat ID (in which command was run) for config.yml |
 
 ## Format string:
 Must contain `%username%` and `%message` inside.
