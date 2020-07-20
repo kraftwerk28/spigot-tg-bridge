@@ -5,6 +5,7 @@ import com.github.kotlintelegrambot.bot
 import com.github.kotlintelegrambot.dispatch
 import com.github.kotlintelegrambot.dispatcher.command
 import com.github.kotlintelegrambot.dispatcher.text
+import com.github.kotlintelegrambot.entities.BotCommand
 import com.github.kotlintelegrambot.entities.ParseMode
 import com.github.kotlintelegrambot.entities.Update
 import com.github.kotlintelegrambot.entities.User
@@ -30,9 +31,11 @@ class TgBot(private val plugin: Plugin, private val config: Configuration) {
             dispatch {
                 command(commands.time.replace(slashRegex, ""), ::time)
                 command(commands.online.replace(slashRegex, ""), ::online)
+                command(commands.chatID.replace(slashRegex, ""), ::chatID)
                 text(null, ::onText)
             }
         }
+        bot.setMyCommands(getBotCommands())
         skipUpdates()
         plugin.logger.info("Server address: ${InetAddress.getLocalHost().hostAddress}.")
         config.webhookConfig?.let { _ ->
@@ -48,6 +51,10 @@ class TgBot(private val plugin: Plugin, private val config: Configuration) {
 
     private fun time(bot: Bot, update: Update) {
         val msg = update.message!!
+        if (!config.allowedChats.contains(msg.chat.id)) {
+            return
+        }
+
         if (plugin.server.worlds.isEmpty()) {
             bot.sendMessage(
                 msg.chat.id,
@@ -74,6 +81,11 @@ class TgBot(private val plugin: Plugin, private val config: Configuration) {
     }
 
     private fun online(bot: Bot, update: Update) {
+        val msg = update.message!!
+        if (!config.allowedChats.contains(msg.chat.id)) {
+            return
+        }
+
         val playerList = plugin.server.onlinePlayers
         val playerStr = plugin.server
             .onlinePlayers
@@ -82,11 +94,27 @@ class TgBot(private val plugin: Plugin, private val config: Configuration) {
         val text =
             if (playerList.isNotEmpty()) "${config.onlineString}:\n$playerStr"
             else config.nobodyOnlineString
-        val msg = update.message!!
         bot.sendMessage(
             msg.chat.id, text,
             replyToMessageId = msg.messageId,
             parseMode = ParseMode.HTML
+        )
+    }
+
+    private fun chatID(bot: Bot, update: Update) {
+        val msg = update.message!!
+        val chatID = msg.chat.id
+        val text = """
+            Chat ID:
+            <code>$chatID</code>
+            paste this id to <code>chats:</code> section in you config.yml file so it will look like this:
+        """.trimIndent() +
+                "\n\n<code>chats:\n  # other ids...\n  - ${chatID}</code>"
+        bot.sendMessage(
+            chatID,
+            text,
+            parseMode = ParseMode.HTML,
+            replyToMessageId = msg.messageId
         )
     }
 
@@ -129,6 +157,12 @@ class TgBot(private val plugin: Plugin, private val config: Configuration) {
             if (lastUpd !is Update) return
             return skipUpdates(lastUpd.updateId + 1)
         }
+    }
+
+    private fun getBotCommands(): List<BotCommand> {
+        val cmdList = config.commands.run { listOf(time, online, chatID) }
+        val descList = C.COMMAND_DESC.run { listOf(timeDesc, onlineDesc, chatIDDesc) }
+        return cmdList.zip(descList).map { BotCommand(it.first, it.second) }
     }
 
     companion object {

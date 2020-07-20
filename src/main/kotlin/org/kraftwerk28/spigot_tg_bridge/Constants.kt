@@ -22,4 +22,9 @@ object Constants {
     object COMMANDS {
         const val PLUGIN_RELOAD = "tgbridge_reload"
     }
+    object COMMAND_DESC {
+        const val timeDesc = "Get time on server"
+        const val onlineDesc = "Get players online"
+        const val chatIDDesc = "Get current chat id"
+    }
 }
