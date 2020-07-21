@@ -10,7 +10,7 @@ logFromMCtoTG: true
 logFromTGtoMC: true
 logPlayerDeath: false
 logPlayerAsleep: false
-telegramMessageFormat: '<%player%>: %message%'
+telegramMessageFormat: '<%username%>: %message%'
 strings:
   online: '<b>Online</b>'
   nobodyOnline: '<b>Nobody online...</b>'
@@ -19,3 +19,4 @@ strings:
 commands:
   time: 'time'
   online: 'online'
+  chat_id: 'chat_id'
