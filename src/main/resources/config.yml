@@ -11,11 +11,12 @@ logFromTGtoMC: true
 logPlayerDeath: false
 logPlayerAsleep: false
 telegramMessageFormat: '<%username%>: %message%'
+minecraftMessageFormat: '<i>%username%</i>: %message%'
 strings:
   online: '<b>Online</b>'
   nobodyOnline: '<b>Nobody online...</b>'
-  joined: 'joined'
-  left: 'left'
+  joined: '<i>%username%</i> joined.'
+  left: '<i>%username%</i> left.'
 commands:
   time: 'time'
   online: 'online'

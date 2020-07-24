@@ -10,6 +10,7 @@ class Configuration(plugin: Plugin) {
     var isEnabled: Boolean = false
     var logFromMCtoTG: Boolean = false
     var telegramMessageFormat: String = ""
+    var minecraftMessageFormat: String = ""
     var serverStartMessage: String? = null
     var serverStopMessage: String? = null
 
@@ -51,6 +52,7 @@ class Configuration(plugin: Plugin) {
             logFromTGtoMC = getBoolean("logFromTGtoMC", true)
             logFromMCtoTG = getBoolean("logFromMCtoTG", true)
             telegramMessageFormat = getString("telegramMessageFormat", "<%username%>: %message%")!!
+            minecraftMessageFormat = getString("minecraftMessageFormat", "<i>%username%</i>: %message%")!!
             allowedChats = getLongList("chats")
             serverStartMessage = getString("serverStartMessage")
             serverStopMessage = getString("serverStopMessage")
@@ -67,9 +69,9 @@ class Configuration(plugin: Plugin) {
 
             logJoinLeave = getBoolean("logJoinLeave", false)
             onlineString = getString("strings.online", "Online")!!
-            nobodyOnlineString = getString("strings.offline", "Nobody online")!!
-            joinString = getString("strings.joined", "joined")
-            leaveString = getString("strings.left", "left")
+            nobodyOnlineString = getString("strings.nobodyOnline", "Nobody online")!!
+            joinString = getString("strings.joined", "<i>%username%</i> joined.")
+            leaveString = getString("strings.left", "<i>%username%</i> left.")
             logDeath = getBoolean("logPlayerDeath", false)
             logPlayerAsleep = getBoolean("logPlayerAsleep", false)
 

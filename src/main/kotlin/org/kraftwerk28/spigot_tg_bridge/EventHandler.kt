@@ -24,17 +24,17 @@ class EventHandler(
 
     @EventHandler
     fun onPlayerJoin(event: PlayerJoinEvent) {
-        if (!config.logJoinLeave) return
-        val text = "<i>${TgBot.escape(event.player.displayName)}</i> " +
-                "${config.joinString}."
+        if (!config.logJoinLeave || config.joinString == null) return
+        val username = TgBot.fullEscape(event.player.displayName)
+        val text = config.joinString!!.replace("%username%", username)
         plugin.tgBot.broadcastToTG(text)
     }
 
     @EventHandler
     fun onPlayerLeave(event: PlayerQuitEvent) {
-        if (!config.logJoinLeave) return
-        val text = "<i>${TgBot.escape(event.player.displayName)}</i> " +
-                "${config.leaveString}."
+        if (!config.logJoinLeave || config.leaveString == null) return
+        val username = TgBot.fullEscape(event.player.displayName)
+        val text = config.leaveString!!.replace("%username%", username)
         plugin.tgBot.broadcastToTG(text)
     }
 
@@ -42,8 +42,8 @@ class EventHandler(
     fun onPlayerDied(event: PlayerDeathEvent) {
         if (!config.logDeath) return
         event.deathMessage?.let {
-            val plName = event.entity.displayName
-            val text = it.replace(plName, "<i>$plName</i>")
+            val username = TgBot.fullEscape(event.entity.displayName)
+            val text = it.replace(username, "<i>$username</i>")
             plugin.tgBot.broadcastToTG(text)
         }
     }

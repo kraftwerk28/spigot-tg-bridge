@@ -8,7 +8,6 @@ import com.github.kotlintelegrambot.entities.ParseMode
 import com.github.kotlintelegrambot.entities.Update
 import com.github.kotlintelegrambot.entities.User
 import okhttp3.logging.HttpLoggingInterceptor
-import kotlin.reflect.KProperty0
 import org.kraftwerk28.spigot_tg_bridge.Constants as C
 
 fun Bot.skipUpdates(lastUpdateID: Long = 0) {
@@ -106,7 +105,7 @@ class TgBot(private val plugin: Plugin, private val config: Configuration) {
         val playerList = plugin.server.onlinePlayers
         val playerStr = plugin.server
             .onlinePlayers
-            .mapIndexed { i, s -> "${i + 1}. ${s.displayName}" }
+            .mapIndexed { i, s -> "${i + 1}. ${fullEscape(s.displayName)}" }
             .joinToString("\n")
         val text =
             if (playerList.isNotEmpty()) "${config.onlineString}:\n$playerStr"
@@ -159,7 +158,9 @@ class TgBot(private val plugin: Plugin, private val config: Configuration) {
     }
 
     private fun messageFromMinecraft(username: String, text: String): String =
-        "<i>${escape(username)}</i>: $text"
+        config.minecraftMessageFormat
+            .replace("%username%", fullEscape(username))
+            .replace("%message%", escapeHTML(text))
 
     private fun rawUserMention(user: User): String =
         (if (user.firstName.length < 2) null else user.firstName)
@@ -176,6 +177,6 @@ class TgBot(private val plugin: Plugin, private val config: Configuration) {
         fun escapeHTML(s: String) =
             s.replace("&", "&amp;").replace(">", "&gt;").replace("<", "&lt;")
         fun escapeColorCodes(s: String) = s.replace("\u00A7.".toRegex(), "")
-        fun escape(s: String) = escapeColorCodes(escapeHTML(s))
+        fun fullEscape(s: String) = escapeColorCodes(escapeHTML(s))
     }
 }

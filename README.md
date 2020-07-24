@@ -57,13 +57,13 @@ P. S. You can always update plugin configuration without restarting the server. 
 | logPlayerDeath | If true, plugin will send message to Telegram if player died | `boolean` | :x: | `false` |
 | logPlayerAsleep | If true, plugin will send message to Telegram if player fell asleep | `boolean` | :x: | `false` |
 | strings | Dictionary of tokens - strings for plugin i18n | `Map<string, string>` | :x: | See default config |
-| commands | Dictionary of command text used in Telegram bot | `Map<string, string>` | :x: | See default config |
+| commands | Dictionary of command text used in Telegram bot | `Map<string, string>` | :heavy_check_mark: | See below |
 | telegramMessageFormat | Format string for TGtoMC chat message | `string` | :x: | See default config |
 
 
 ## Telegram bot commands:
 
-Commands are customizeable through config, but there are default values for them as well
+Commands are customizeable through config. If command doesn't exist in config, it will be disabled
 
 | Command | Description |
 |:-------:|:------------|
