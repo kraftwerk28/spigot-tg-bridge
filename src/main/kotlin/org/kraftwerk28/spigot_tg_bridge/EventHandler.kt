@@ -25,7 +25,7 @@ class EventHandler(
     @EventHandler
     fun onPlayerJoin(event: PlayerJoinEvent) {
         if (!config.logJoinLeave) return
-        val text = "<b>${TgBot.escapeHTML(event.player.displayName)}</b> " +
+        val text = "<i>${TgBot.escape(event.player.displayName)}</i> " +
                 "${config.joinString}."
         plugin.tgBot.broadcastToTG(text)
     }
@@ -33,7 +33,7 @@ class EventHandler(
     @EventHandler
     fun onPlayerLeave(event: PlayerQuitEvent) {
         if (!config.logJoinLeave) return
-        val text = "<b>${TgBot.escapeHTML(event.player.displayName)}</b> " +
+        val text = "<i>${TgBot.escape(event.player.displayName)}</i> " +
                 "${config.leaveString}."
         plugin.tgBot.broadcastToTG(text)
     }
@@ -43,7 +43,7 @@ class EventHandler(
         if (!config.logDeath) return
         event.deathMessage?.let {
             val plName = event.entity.displayName
-            val text = it.replace(plName, "<b>$plName</b>")
+            val text = it.replace(plName, "<i>$plName</i>")
             plugin.tgBot.broadcastToTG(text)
         }
     }
@@ -52,7 +52,7 @@ class EventHandler(
     fun onPlayerAsleep(event: PlayerBedEnterEvent) {
         if (!config.logPlayerAsleep) return
         if (event.bedEnterResult != PlayerBedEnterEvent.BedEnterResult.OK) return
-        val text = "<b>${event.player.displayName}</b> fell asleep."
+        val text = "<i>${event.player.displayName}</i> fell asleep."
         plugin.tgBot.broadcastToTG(text)
     }
 }

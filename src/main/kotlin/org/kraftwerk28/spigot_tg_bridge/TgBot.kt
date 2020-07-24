@@ -1,8 +1,6 @@
 package org.kraftwerk28.spigot_tg_bridge
 
-import com.github.kotlintelegrambot.Bot
-import com.github.kotlintelegrambot.bot
-import com.github.kotlintelegrambot.dispatch
+import com.github.kotlintelegrambot.*
 import com.github.kotlintelegrambot.dispatcher.command
 import com.github.kotlintelegrambot.dispatcher.text
 import com.github.kotlintelegrambot.entities.BotCommand
@@ -10,8 +8,18 @@ import com.github.kotlintelegrambot.entities.ParseMode
 import com.github.kotlintelegrambot.entities.Update
 import com.github.kotlintelegrambot.entities.User
 import okhttp3.logging.HttpLoggingInterceptor
-import java.net.InetAddress
+import kotlin.reflect.KProperty0
 import org.kraftwerk28.spigot_tg_bridge.Constants as C
+
+fun Bot.skipUpdates(lastUpdateID: Long = 0) {
+    val newUpdates = getUpdates(lastUpdateID)
+
+    if (newUpdates.isNotEmpty()) {
+        val lastUpd = newUpdates.last()
+        if (lastUpd !is Update) return
+        return skipUpdates(lastUpd.updateId + 1)
+    }
+}
 
 class TgBot(private val plugin: Plugin, private val config: Configuration) {
 
@@ -28,16 +36,25 @@ class TgBot(private val plugin: Plugin, private val config: Configuration) {
         bot = bot {
             token = config.botToken
             logLevel = HttpLoggingInterceptor.Level.NONE
+
+            val cmdBinding = commands.let {
+                mapOf(
+                    it.time to ::time,
+                    it.online to ::online,
+                    it.chatID to ::chatID
+                )
+            }.filterKeys { it != null }
+
             dispatch {
-                command(commands.time.replace(slashRegex, ""), ::time)
-                command(commands.online.replace(slashRegex, ""), ::online)
-                command(commands.chatID.replace(slashRegex, ""), ::chatID)
+                cmdBinding.forEach { text, handler ->
+                    command(text!!, handler as HandleUpdate)
+                }
                 text(null, ::onText)
             }
         }
         bot.setMyCommands(getBotCommands())
-        skipUpdates()
-        plugin.logger.info("Server address: ${InetAddress.getLocalHost().hostAddress}.")
+        bot.skipUpdates()
+
         config.webhookConfig?.let { _ ->
             plugin.logger.info("Running in webhook mode.")
         } ?: run {
@@ -128,7 +145,7 @@ class TgBot(private val plugin: Plugin, private val config: Configuration) {
         config.allowedChats.forEach { chatID ->
             bot.sendMessage(
                 chatID,
-                mcMessageStr(username, text),
+                messageFromMinecraft(username, text),
                 parseMode = ParseMode.HTML
             )
         }
@@ -141,32 +158,24 @@ class TgBot(private val plugin: Plugin, private val config: Configuration) {
         plugin.sendMessageToMCFrom(rawUserMention(msg.from!!), msg.text!!)
     }
 
-    private fun mcMessageStr(username: String, text: String): String =
-        "<b>${escapeHTML(username)}</b>: $text"
+    private fun messageFromMinecraft(username: String, text: String): String =
+        "<i>${escape(username)}</i>: $text"
 
     private fun rawUserMention(user: User): String =
         (if (user.firstName.length < 2) null else user.firstName)
             ?: user.username
             ?: user.lastName!!
 
-    private fun skipUpdates(lastUpdateID: Long = 0) {
-        val newUpdates = bot.getUpdates(lastUpdateID)
-
-        if (newUpdates.isNotEmpty()) {
-            val lastUpd = newUpdates.last()
-            if (lastUpd !is Update) return
-            return skipUpdates(lastUpd.updateId + 1)
-        }
-    }
-
     private fun getBotCommands(): List<BotCommand> {
-        val cmdList = config.commands.run { listOf(time, online, chatID) }
+        val cmdList = config.commands.run { listOfNotNull(time, online, chatID) }
         val descList = C.COMMAND_DESC.run { listOf(timeDesc, onlineDesc, chatIDDesc) }
         return cmdList.zip(descList).map { BotCommand(it.first, it.second) }
     }
 
     companion object {
-        fun escapeHTML(s: String): String =
+        fun escapeHTML(s: String) =
             s.replace("&", "&amp;").replace(">", "&gt;").replace("<", "&lt;")
+        fun escapeColorCodes(s: String) = s.replace("\u00A7.".toRegex(), "")
+        fun escape(s: String) = escapeColorCodes(escapeHTML(s))
     }
 }

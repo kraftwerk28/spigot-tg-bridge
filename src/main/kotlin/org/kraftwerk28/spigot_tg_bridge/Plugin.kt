@@ -35,7 +35,7 @@ class Plugin : JavaPlugin() {
     }
 
     override fun onDisable() {
-        if (!config.isEnabled) return
+        if (!config?.isEnabled) return
         config.serverStopMessage?.let {
             tgBot.broadcastToTG(it)
         }
