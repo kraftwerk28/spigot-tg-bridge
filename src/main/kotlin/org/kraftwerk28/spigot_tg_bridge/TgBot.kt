@@ -32,6 +32,7 @@ class TgBot(private val plugin: Plugin, private val config: Configuration) {
         val slashRegex = "^/+".toRegex()
         val commands = config.commands
 
+        skipUpdates()
         bot = bot {
             token = config.botToken
             logLevel = HttpLoggingInterceptor.Level.NONE
@@ -45,14 +46,13 @@ class TgBot(private val plugin: Plugin, private val config: Configuration) {
             }.filterKeys { it != null }
 
             dispatch {
-                cmdBinding.forEach { text, handler ->
-                    command(text!!, handler as HandleUpdate)
+                cmdBinding.forEach { (text, handler) ->
+                    command(text!!.replace(slashRegex, ""), handler)
                 }
                 text(null, ::onText)
             }
         }
         bot.setMyCommands(getBotCommands())
-        bot.skipUpdates()
 
         config.webhookConfig?.let { _ ->
             plugin.logger.info("Running in webhook mode.")
@@ -173,10 +173,22 @@ class TgBot(private val plugin: Plugin, private val config: Configuration) {
         return cmdList.zip(descList).map { BotCommand(it.first, it.second) }
     }
 
+    private fun skipUpdates() {
+        bot {
+            token = config.botToken
+            timeout = 0
+            logLevel = HttpLoggingInterceptor.Level.NONE
+        }.skipUpdates()
+    }
+
     companion object {
-        fun escapeHTML(s: String) =
-            s.replace("&", "&amp;").replace(">", "&gt;").replace("<", "&lt;")
+        fun escapeHTML(s: String) = s
+            .replace("&", "&amp;")
+            .replace(">", "&gt;")
+            .replace("<", "&lt;")
+
         fun escapeColorCodes(s: String) = s.replace("\u00A7.".toRegex(), "")
+
         fun fullEscape(s: String) = escapeColorCodes(escapeHTML(s))
     }
 }
