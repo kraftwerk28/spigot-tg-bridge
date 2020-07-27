@@ -83,7 +83,7 @@ Commands are customizeable through config. If command doesn't exist in config, i
 
 Applies to `telegramMessageFormat` and `minecraftMessageFormat` configurations.
 Must contain `%username%` and `%message%` inside.
-You can customize message color with it (only for `telegramMessageFormat`. See [message color codes](https://www.digminecraft.com/lists/color_list_pc.php) for more information.
+You can customize message color with it (coloring works only for `telegramMessageFormat`). You can customize bold/italics/stirethrough formatting (works only for `minecraftMessageFormat`). See [Minecraft message color codes](https://www.digminecraft.com/lists/color_list_pc.php) and [Telegram message formatting](https://core.telegram.org/bots/api#html-style) for more information.
 This feature is related to [this issue](https://github.com/kraftwerk28/spigot-tg-bridge/issues/6)
 
 
