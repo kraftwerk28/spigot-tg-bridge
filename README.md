@@ -59,6 +59,7 @@ P. S. You can always update plugin configuration without restarting the server. 
 | strings | Dictionary of tokens - strings for plugin i18n | `Map<string, string>` | :x: | See default config |
 | commands | Dictionary of command text used in Telegram bot | `Map<string, string>` | :heavy_check_mark: | See below |
 | telegramMessageFormat | Format string for TGtoMC chat message | `string` | :x: | See default config |
+| minecraftMessageFormat | Format string for MCtoTG chat message | `string` | :x: | See default config |
 
 
 ## Telegram bot commands:
@@ -74,8 +75,14 @@ Commands are customizeable through config. If command doesn't exist in config, i
 
 ## Format string:
 
-Must contain `%username%` and `%message` inside.
-You can customize message color with it. See [message color codes](https://www.digminecraft.com/lists/color_list_pc.php) for more information.
+```
++--------+ >--minecraftMessageFormat(message)-> +--------------+
+| Spigot |                                      | Telegram bot |
++--------+ <--telegramMessageFormat(message)--< +--------------+
+
+Applies to `telegramMessageFormat` and `minecraftMessageFormat` configurations.
+Must contain `%username%` and `%message%` inside.
+You can customize message color with it (only for `telegramMessageFormat`. See [message color codes](https://www.digminecraft.com/lists/color_list_pc.php) for more information.
 This feature is related to [this issue](https://github.com/kraftwerk28/spigot-tg-bridge/issues/6)
 
 
