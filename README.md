@@ -79,6 +79,7 @@ Commands are customizeable through config. If command doesn't exist in config, i
 +--------+ >--minecraftMessageFormat(message)-> +--------------+
 | Spigot |                                      | Telegram bot |
 +--------+ <--telegramMessageFormat(message)--< +--------------+
+```
 
 Applies to `telegramMessageFormat` and `minecraftMessageFormat` configurations.
 Must contain `%username%` and `%message%` inside.
