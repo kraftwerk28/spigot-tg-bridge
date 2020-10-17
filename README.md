@@ -8,7 +8,7 @@
 
 2. If you already have telegram bot, skip this step. Otherwise create it through [BotFather](https://t.me/BotFather). You'll go through step-by-step instructions, give a bot __username__ and most importantly, obtain a bot __token__. Save this token for future use.
 
-3. Next, we need to tell plugin about your new bot. You can either:
+3. Next, you need to tell plugin about your new bot. You can either:
     - Run Spigot server, plugin will log `"No config file found! Saving default one."`. After that, stop server and proceed to 4th step.
     - Copy [config.yml](https://raw.githubusercontent.com/kraftwerk28/spigot-tg-bridge/master/src/main/resources/config.yml) to `plugins/SpigotTGBridge/` in your server directory.
 
