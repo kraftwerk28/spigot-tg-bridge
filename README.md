@@ -38,9 +38,6 @@
 8. Re-run server or type `tgbridge_reload` into server's console.
 
 
-P. S. You can always update plugin configuration without restarting the server. Just edit `config.yml` in the `plugins/` directory, save it, then type `tgbridge_reload` into server's console. Beware, that plugin reload takes some time (usually up to 30 secs), and I work on it right now.
-
-
 ## Plugin configuration:
 
 | Field | Description | Type | Required | Default |
