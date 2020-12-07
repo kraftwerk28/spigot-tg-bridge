@@ -6,7 +6,7 @@
 
 1. Download .jar file from [releases page](https://github.com/kraftwerk28/spigot-tg-bridge/releases), and put it in `plugins/` directory on your server **OR** clone this repo and run `gradle shadowJar` inside repo's directory.
 
-2. If you already have telegram bot, skip this step. Otherwise create it through [BotFather](https://t.me/BotFather). You'll go through step-by-step instructions, give a bot __username__ and most importantly, obtain a bot __token__. Save this token for future use.
+2. If you already have telegram bot, skip this step. Otherwise create it through [BotFather](https://t.me/BotFather). You'll go through step-by-step instructions, give a bot __username__ and most importantly, obtain a bot __token__. Save this token for future use. **Note:** in order to make your bot hear raw text messages (not commands), you must disable [privacy mode](https://core.telegram.org/bots#privacy-mode) option which is on by default. Go through bot's settings: **Bot Settings -> Group Privacy** and click **Turn Off**.
 
 3. Next, you need to tell plugin about your new bot. You can either:
     - Run Spigot server, plugin will log `"No config file found! Saving default one."`. After that, stop server and proceed to 4th step.
