@@ -33,7 +33,7 @@
       # other chat id's...
     ```
 
-7. You can extend `config.yml` with more tweaks, which are described in the table below, but it's not nesessary, plugin will use default values instead, if they're missing.
+7. You can extend `config.yml` with more tweaks, which are described in the table below, but it's not nesessary, plugin will use default values instead, if they're missing. Also, check out the [example](src/main/resources/config.yml).
 
 8. Re-run server or type `tgbridge_reload` into server's console.
 
