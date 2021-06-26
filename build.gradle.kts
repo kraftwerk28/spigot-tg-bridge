@@ -41,7 +41,7 @@ val homeDir = System.getProperty("user.home")
 
 tasks {
     named<ShadowJar>("shadowJar") {
-        archiveBaseName.set(
+        archiveFileName.set(
             "spigot-tg-bridge-${spigotApiVersion}-v${pluginVersion}.jar"
         )
     }
