@@ -6,9 +6,9 @@
 
 1. Download .jar file from [releases page](https://github.com/kraftwerk28/spigot-tg-bridge/releases), and put it in `plugins/` directory on your server **OR** clone this repo and run `gradle shadowJar` inside repo's directory.
 
-2. If you already have telegram bot, skip this step. Otherwise create it through [BotFather](https://t.me/BotFather). You'll go through step-by-step instructions, give a bot __username__ and most importanrly, obtain a bot __token__. Save this token.
+2. If you already have telegram bot, skip this step. Otherwise create it through [BotFather](https://t.me/BotFather). You'll go through step-by-step instructions, give a bot __username__ and most importantly, obtain a bot __token__. Save this token for future use. **Note:** in order to make your bot hear raw text messages (not commands), you must disable [privacy mode](https://core.telegram.org/bots#privacy-mode) option which is on by default. Go through bot's settings: **Bot Settings -> Group Privacy** and click **Turn Off**.
 
-3. Next, we need to tell plugin about your new bot. You can either:
+3. Next, you need to tell plugin about your new bot. You can either:
     - Run Spigot server, plugin will log `"No config file found! Saving default one."`. After that, stop server and proceed to 4th step.
     - Copy [config.yml](https://raw.githubusercontent.com/kraftwerk28/spigot-tg-bridge/master/src/main/resources/config.yml) to `plugins/SpigotTGBridge/` in your server directory.
 
@@ -31,12 +31,9 @@
       # other chat id's...
     ```
 
-7. You can extend `config.yml` with more tweaks, which are described in the table below, but it's not nesessary, plugin will use default values instead, if they're missing.
+7. You can extend `config.yml` with more tweaks, which are described in the table below, but it's not nesessary, plugin will use default values instead, if they're missing. Also, check out the [example](src/main/resources/config.yml).
 
 8. Re-run server or type `tgbridge_reload` into server's console.
-
-
-P. S. You can always update plugin configuration without restarting the server. Just edit `config.yml` in the `plugins/` directory, save it, then type `tgbridge_reload` into server's console. Beware, that plugin reload takes some time (usually up to 30 secs), and I work on it right now.
 
 
 ## Plugin configuration:
@@ -56,6 +53,7 @@ P. S. You can always update plugin configuration without restarting the server. 
 | strings | Dictionary of tokens - strings for plugin i18n | `Map<string, string>` | :x: | See default config |
 | commands | Dictionary of command text used in Telegram bot | `Map<string, string>` | :heavy_check_mark: | See below |
 | telegramMessageFormat | Format string for TGtoMC chat message | `string` | :x: | See default config |
+| minecraftMessageFormat | Format string for MCtoTG chat message | `string` | :x: | See default config |
 
 
 ## Telegram bot commands:
@@ -71,8 +69,15 @@ Commands are customizeable through config. If command doesn't exist in config, i
 
 ## Format string:
 
-Must contain `%username%` and `%message` inside.
-You can customize message color with it. See [message color codes](https://www.digminecraft.com/lists/color_list_pc.php) for more information.
+```
++--------+ >--minecraftMessageFormat(message)-> +--------------+
+| Spigot |                                      | Telegram bot |
++--------+ <--telegramMessageFormat(message)--< +--------------+
+```
+
+Applies to `telegramMessageFormat` and `minecraftMessageFormat` configurations.
+Must contain `%username%` and `%message%` inside.
+You can customize message color with it (coloring works only for `telegramMessageFormat`). You can customize bold/italics/stirethrough formatting (works only for `minecraftMessageFormat`). See [Minecraft message color codes](https://www.digminecraft.com/lists/color_list_pc.php) and [Telegram message formatting](https://core.telegram.org/bots/api#html-style) for more information.
 This feature is related to [this issue](https://github.com/kraftwerk28/spigot-tg-bridge/issues/6)
 
 
