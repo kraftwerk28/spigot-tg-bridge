@@ -6,19 +6,10 @@ import com.github.kotlintelegrambot.dispatcher.text
 import com.github.kotlintelegrambot.entities.BotCommand
 import com.github.kotlintelegrambot.entities.ParseMode
 import com.github.kotlintelegrambot.entities.Update
-import com.github.kotlintelegrambot.entities.User
+import com.github.kotlintelegrambot.logging.LogLevel
+import com.github.kotlintelegrambot.entities.ChatId
 import okhttp3.logging.HttpLoggingInterceptor
 import org.kraftwerk28.spigot_tg_bridge.Constants as C
-
-fun Bot.skipUpdates(lastUpdateID: Long = 0) {
-    val newUpdates = getUpdates(lastUpdateID)
-
-    if (newUpdates.isNotEmpty()) {
-        val lastUpd = newUpdates.last()
-        if (lastUpd !is Update) return
-        return skipUpdates(lastUpd.updateId + 1)
-    }
-}
 
 class TgBot(private val plugin: Plugin, private val config: Configuration) {
 
@@ -35,9 +26,9 @@ class TgBot(private val plugin: Plugin, private val config: Configuration) {
         skipUpdates()
         bot = bot {
             token = config.botToken
-            logLevel = HttpLoggingInterceptor.Level.NONE
+            logLevel = LogLevel.None
 
-            val cmdBinding = commands.let {
+            val commandBindings = commands.let {
                 mapOf(
                     it.time to ::time,
                     it.online to ::online,
@@ -46,10 +37,12 @@ class TgBot(private val plugin: Plugin, private val config: Configuration) {
             }.filterKeys { it != null }
 
             dispatch {
-                cmdBinding.forEach { (text, handler) ->
-                    command(text!!.replace(slashRegex, ""), handler)
+                commandBindings.forEach { (text, handler) ->
+                    command(text!!.replace(slashRegex, "")) {
+                        handler(update)
+                    }
                 }
-                text(null, ::onText)
+                text { onText(update) }
             }
         }
         bot.setMyCommands(getBotCommands())
@@ -65,7 +58,7 @@ class TgBot(private val plugin: Plugin, private val config: Configuration) {
         bot.stopPolling()
     }
 
-    private fun time(bot: Bot, update: Update) {
+    private fun time(update: Update) {
         val msg = update.message!!
         if (!config.allowedChats.contains(msg.chat.id)) {
             return
@@ -73,7 +66,7 @@ class TgBot(private val plugin: Plugin, private val config: Configuration) {
 
         if (plugin.server.worlds.isEmpty()) {
             bot.sendMessage(
-                msg.chat.id,
+                ChatId.fromId(msg.chat.id),
                 "No worlds available",
                 replyToMessageId = msg.messageId
             )
@@ -90,13 +83,14 @@ class TgBot(private val plugin: Plugin, private val config: Configuration) {
         } + " ($t)"
 
         bot.sendMessage(
-            msg.chat.id, text,
+            ChatId.fromId(msg.chat.id),
+            text,
             replyToMessageId = msg.messageId,
             parseMode = ParseMode.HTML
         )
     }
 
-    private fun online(bot: Bot, update: Update) {
+    private fun online(update: Update) {
         val msg = update.message!!
         if (!config.allowedChats.contains(msg.chat.id)) {
             return
@@ -111,13 +105,14 @@ class TgBot(private val plugin: Plugin, private val config: Configuration) {
             if (playerList.isNotEmpty()) "${config.onlineString}:\n$playerStr"
             else config.nobodyOnlineString
         bot.sendMessage(
-            msg.chat.id, text,
+            ChatId.fromId(msg.chat.id),
+            text,
             replyToMessageId = msg.messageId,
             parseMode = ParseMode.HTML
         )
     }
 
-    private fun chatID(bot: Bot, update: Update) {
+    private fun chatID(update: Update) {
         val msg = update.message!!
         val chatID = msg.chat.id
         val text = """
@@ -127,45 +122,48 @@ class TgBot(private val plugin: Plugin, private val config: Configuration) {
         """.trimIndent() +
                 "\n\n<code>chats:\n  # other ids...\n  - ${chatID}</code>"
         bot.sendMessage(
-            chatID,
+            ChatId.fromId(chatID),
             text,
             parseMode = ParseMode.HTML,
             replyToMessageId = msg.messageId
         )
     }
 
-    fun broadcastToTG(text: String) {
+    fun sendMessageToTelegram(text: String, username: String? = null) {
         config.allowedChats.forEach { chatID ->
-            bot.sendMessage(chatID, text, parseMode = ParseMode.HTML)
+            username?.let {
+                bot.sendMessage(
+                    ChatId.fromId(chatID),
+                    formatMsgFromMinecraft(username, text),
+                    parseMode = ParseMode.HTML,
+                )
+            } ?: run {
+                bot.sendMessage(
+                    ChatId.fromId(chatID),
+                    text,
+                    parseMode = ParseMode.HTML,
+                )
+            }
         }
     }
 
-    fun sendMessageToTGFrom(username: String, text: String) {
-        config.allowedChats.forEach { chatID ->
-            bot.sendMessage(
-                chatID,
-                messageFromMinecraft(username, text),
-                parseMode = ParseMode.HTML
-            )
-        }
-    }
-
-    private fun onText(bot: Bot, update: Update) {
+    private fun onText(update: Update) {
         if (!config.logFromTGtoMC) return
         val msg = update.message!!
-        if (msg.text!!.startsWith("/")) return // Suppress command forwarding
-        plugin.sendMessageToMCFrom(rawUserMention(msg.from!!), msg.text!!)
+
+        // Suppress commands to be sent to Minecraft
+        if (msg.text!!.startsWith("/")) return
+
+        plugin.sendMessageToMinecraft(msg.text!!, rawUserMention(msg.from!!))
     }
 
-    private fun messageFromMinecraft(username: String, text: String): String =
+    private fun formatMsgFromMinecraft(
+        username: String,
+        text: String
+    ): String =
         config.minecraftMessageFormat
             .replace("%username%", fullEscape(username))
             .replace("%message%", escapeHTML(text))
-
-    private fun rawUserMention(user: User): String =
-        (if (user.firstName.length < 2) null else user.firstName)
-            ?: user.username
-            ?: user.lastName!!
 
     private fun getBotCommands(): List<BotCommand> {
         val cmdList = config.commands.run { listOfNotNull(time, online, chatID) }
@@ -174,21 +172,11 @@ class TgBot(private val plugin: Plugin, private val config: Configuration) {
     }
 
     private fun skipUpdates() {
+        // Creates a temporary bot w/ 0 timeout to skip updates
         bot {
             token = config.botToken
             timeout = 0
-            logLevel = HttpLoggingInterceptor.Level.NONE
+            logLevel = LogLevel.None
         }.skipUpdates()
-    }
-
-    companion object {
-        fun escapeHTML(s: String) = s
-            .replace("&", "&amp;")
-            .replace(">", "&gt;")
-            .replace("<", "&lt;")
-
-        fun escapeColorCodes(s: String) = s.replace("\u00A7.".toRegex(), "")
-
-        fun fullEscape(s: String) = escapeColorCodes(escapeHTML(s))
     }
 }

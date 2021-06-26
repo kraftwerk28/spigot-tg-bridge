@@ -9,42 +9,43 @@ import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerQuitEvent
 
 class EventHandler(
-    private val plugin: Plugin,
+    private val tgBot: TgBot,
     private val config: Configuration
 ) : Listener {
 
     @EventHandler
     fun onPlayerChat(event: AsyncPlayerChatEvent) {
-        if (config.logFromMCtoTG) {
-            plugin.tgBot.sendMessageToTGFrom(
-                event.player.displayName, event.message
+        if (!config.logFromMCtoTG) return
+        event.run {
+            tgBot.sendMessageToTelegram(
+                message, player.displayName
             )
         }
     }
 
     @EventHandler
     fun onPlayerJoin(event: PlayerJoinEvent) {
-        if (!config.logJoinLeave || config.joinString == null) return
-        val username = TgBot.fullEscape(event.player.displayName)
+         if (!config.logJoinLeave || config.joinString == null) return
+        val username = fullEscape(event.player.displayName)
         val text = config.joinString!!.replace("%username%", username)
-        plugin.tgBot.broadcastToTG(text)
+        tgBot.sendMessageToTelegram(text)
     }
 
     @EventHandler
     fun onPlayerLeave(event: PlayerQuitEvent) {
         if (!config.logJoinLeave || config.leaveString == null) return
-        val username = TgBot.fullEscape(event.player.displayName)
+        val username = fullEscape(event.player.displayName)
         val text = config.leaveString!!.replace("%username%", username)
-        plugin.tgBot.broadcastToTG(text)
+        tgBot.sendMessageToTelegram(text)
     }
 
     @EventHandler
     fun onPlayerDied(event: PlayerDeathEvent) {
         if (!config.logDeath) return
         event.deathMessage?.let {
-            val username = TgBot.fullEscape(event.entity.displayName)
+            val username = fullEscape(event.entity.displayName)
             val text = it.replace(username, "<i>$username</i>")
-            plugin.tgBot.broadcastToTG(text)
+            tgBot.sendMessageToTelegram(text)
         }
     }
 
@@ -53,6 +54,6 @@ class EventHandler(
         if (!config.logPlayerAsleep) return
         if (event.bedEnterResult != PlayerBedEnterEvent.BedEnterResult.OK) return
         val text = "<i>${event.player.displayName}</i> fell asleep."
-        plugin.tgBot.broadcastToTG(text)
+        tgBot.sendMessageToTelegram(text)
     }
 }

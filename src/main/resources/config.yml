@@ -1,6 +1,5 @@
 enable: true
 botToken: abcdef123456789
-botUsername: sample_username
 chats:
   - -1234567890123
 serverStartMessage: 'Server started.'

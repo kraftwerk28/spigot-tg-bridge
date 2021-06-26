@@ -13,10 +13,9 @@
     - Copy [config.yml](https://raw.githubusercontent.com/kraftwerk28/spigot-tg-bridge/master/src/main/resources/config.yml) to `plugins/SpigotTGBridge/` in your server directory.
 
 4. A `config.yml` is just a [valid YAML](https://en.wikipedia.org/wiki/YAML) file, alternative for JSON, but more human-readable.
-   Now, take bot's __username__ and __token__ which you got in 2nd step and paste them into `config.yml`, so it looks like this:
+   Now, take bot's __token__ which you got in 2nd step and paste them into `config.yml`, so it looks like this:
    ```yaml
    botToken: abcdefghijklmnopq123123123
-   botUsername: my_awesome_spigot_bot
    # other configuration values...
    ```
 
@@ -25,7 +24,6 @@
 6. Add you bot to chats, where you plan to use it. In each of them, run `/chat_id` command. The bot should respond and give special value - __chat id__. Now, open `config.yml` and paste this ID under `chats` section, so it will look like this:
     ```yaml
     botToken: abcdefghijklmnopq123123123
-    botUsername: my_awesome_spigot_bot
     chats:
       # Note about doubling minus sign. This is not a mistake, first one means list element, the second one - actual minus
       - -123456789
@@ -47,7 +45,6 @@ P. S. You can always update plugin configuration without restarting the server. 
 |:-----:|:------------|:----:|:--------:|:-------:|
 | enable | If plugin should be enabled | `boolean` | :x: | `true` |
 | botToken | Telegram bot token ([How to create bot](https://core.telegram.org/bots#3-how-do-i-create-a-bot)) | `string` | :heavy_check_mark: | - |
-| botUsername | Telegram bot username | `string` | :heavy_check_mark: | - |
 | chats | Chats, where bot will work (to prevent using bot by unknown chats) | `number[] or string[]` | :heavy_check_mark: | `[]` |
 | serverStartMessage | What will be sent to chats when server starts | `string` | :x: | `'Server started.'` |
 | serverStopMessage | What will be sent to chats when server stops | `string` | :x: | `'Server stopped.'` |

@@ -4,7 +4,7 @@ import org.bukkit.configuration.file.YamlConfiguration
 import java.io.File
 import org.kraftwerk28.spigot_tg_bridge.Constants as C
 
-class Configuration(plugin: Plugin) {
+class Configuration {
     private lateinit var yamlCfg: YamlConfiguration
 
     var isEnabled: Boolean = false
@@ -16,7 +16,6 @@ class Configuration(plugin: Plugin) {
 
     // Telegram bot stuff
     var botToken: String = ""
-    var botUsername: String = ""
     var allowedChats: List<Long> = listOf()
     var logFromTGtoMC: Boolean = false
     var allowWebhook: Boolean = false
@@ -32,16 +31,12 @@ class Configuration(plugin: Plugin) {
 
     lateinit var commands: Commands
 
-    init {
-        reload(plugin)
-    }
-
     fun reload(plugin: Plugin) {
         val cfgFile = File(plugin.dataFolder, C.configFilename);
         if (!cfgFile.exists()) {
             cfgFile.parentFile.mkdirs()
             plugin.saveResource(C.configFilename, false);
-            throw Exception()
+            throw Exception(C.WARN.noConfigWarning)
         }
 
         yamlCfg = YamlConfiguration()
@@ -56,10 +51,7 @@ class Configuration(plugin: Plugin) {
             allowedChats = getLongList("chats")
             serverStartMessage = getString("serverStartMessage")
             serverStopMessage = getString("serverStopMessage")
-
             botToken = getString("botToken") ?: throw Exception(C.WARN.noToken)
-            botUsername = getString("botUsername") ?: throw Exception(C.WARN.noUsername)
-
             allowWebhook = getBoolean("useWebhook", false)
             val whCfg = get("webhookConfig")
             if (whCfg is Map<*, *>) {
@@ -79,4 +71,6 @@ class Configuration(plugin: Plugin) {
 
         commands = Commands(yamlCfg)
     }
+
+    fun load(plugin: Plugin) = reload(plugin)
 }
