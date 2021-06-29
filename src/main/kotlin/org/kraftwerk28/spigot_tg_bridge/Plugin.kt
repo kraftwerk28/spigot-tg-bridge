@@ -22,16 +22,23 @@ class Plugin : JavaPlugin() {
             return
 
         val cmdHandler = CommandHandler(this)
-        tgBot = TgBot(this, config)
+        loadBot()
+        tgBot?.let { bot ->
+            val eventHandler = EventHandler(bot, config)
+            server.pluginManager.registerEvents(eventHandler, this)
+        }
         getCommand(C.COMMANDS.PLUGIN_RELOAD)?.setExecutor(cmdHandler)
-        val eventHandler = EventHandler(tgBot!!, config)
-        server.pluginManager.registerEvents(eventHandler, this)
 
         // Notify Telegram groups about server start
         config.serverStartMessage?.let { message ->
             tgBot?.sendMessageToTelegram(message)
         }
         logger.info("Plugin started.")
+    }
+
+    fun loadBot() {
+        tgBot?.let { it.stop() }
+        tgBot = TgBot(this, config)
     }
 
     override fun onDisable() {
@@ -55,8 +62,7 @@ class Plugin : JavaPlugin() {
     fun reload() {
         logger.info(C.INFO.reloading)
         config.reload(this)
-        tgBot?.stop()
-        tgBot = TgBot(this, config)
+        loadBot()
         logger.info(C.INFO.reloadComplete)
     }
 }

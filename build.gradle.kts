@@ -37,7 +37,7 @@ repositories {
 
 val tgBotVersion = "6.0.4"
 val retrofitVersion = "2.7.1"
-val plugDir = "MinecraftServers/spigot_1.17/plugins/"
+val plugDir = "MinecraftServers/spigot_1.16.5/plugins/"
 val homeDir = System.getProperty("user.home")
 
 tasks {

@@ -6,6 +6,7 @@ import kotlinx.coroutines.channels.*
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
+import retrofit2.Call
 import retrofit2.converter.gson.GsonConverterFactory
 import java.time.Duration
 
@@ -32,13 +33,8 @@ class TgBot(
     }
 
     init {
-        val interceptor = HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.NONE;
-        }
-
         client = OkHttpClient
             .Builder()
-            .addInterceptor(interceptor)
             .readTimeout(Duration.ZERO)
             .build();
 
@@ -65,40 +61,45 @@ class TgBot(
             api.setMyCommands(commands)
         }
 
-        pollJob = scope.launch {
-            try {
-                while (true) {
-                    try {
-                        pollUpdates()
-                    } catch (e: Exception) {
-                        e.printStackTrace()
+        pollJob = initPolling()
+        handlerJob = initHandler()
+    }
+
+    private fun initPolling() = scope.launch {
+        var request:
+            Call<TgApiService.TgResponse<List<TgApiService.Update>>>? = null
+        try {
+            while (true) {
+                try {
+                    request = api.getUpdates(
+                        offset = currentOffset,
+                        timeout = pollTimeout,
+                    )
+                    val response = request.execute().body()
+                    response?.result?.let { updates ->
+                        if (!updates.isEmpty()) {
+                            updates.forEach { updateChan.send(it) }
+                            currentOffset = updates.last().updateId + 1
+                        }
                     }
+                } catch (e: Exception) {
+                    e.printStackTrace()
                 }
-            } catch (e: CancellationException) {}
-        }
-
-        handlerJob = scope.launch {
-            try {
-                while (true) {
-                    handleUpdate()
-                }
-            } catch (e: CancellationException) {}
-        }
-    }
-
-    private suspend fun pollUpdates() {
-        val updatesResponse = api
-            .getUpdates(offset = currentOffset, timeout = pollTimeout)
-        updatesResponse.result?.let { updates ->
-            if (!updates.isEmpty()) {
-                updates.forEach { updateChan.send(it) }
-                currentOffset = updates.last().updateId + 1
             }
+        } catch (e: CancellationException) {
+            request?.cancel()
         }
     }
 
-    private suspend fun handleUpdate() {
-        val update = updateChan.receive()
+    private fun initHandler() = scope.launch {
+        try {
+            while (true) {
+                handleUpdate(updateChan.receive())
+            }
+        } catch (e: CancellationException) {}
+    }
+
+    suspend fun handleUpdate(update: TgApiService.Update) {
         update.message?.text?.let {
             commandRegex.matchEntire(it)?.groupValues?.let {
                 commandMap[it[1]]?.let { it(update) }

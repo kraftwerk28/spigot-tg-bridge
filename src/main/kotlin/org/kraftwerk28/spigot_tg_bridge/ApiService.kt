@@ -1,6 +1,7 @@
 package org.kraftwerk28.spigot_tg_bridge
 
 import com.google.gson.annotations.SerializedName as Name
+import retrofit2.Call
 import retrofit2.http.*
 
 interface TgApiService {
@@ -56,11 +57,11 @@ interface TgApiService {
     ): TgResponse<Message>
 
     @GET("getUpdates")
-    suspend fun getUpdates(
+    fun getUpdates(
         @Query("offset") offset: Long,
         @Query("limit") limit: Int = 100,
         @Query("timeout") timeout: Int = 0,
-    ): TgResponse<List<Update>>
+    ): Call<TgResponse<List<Update>>>
 
     @GET("getMe")
     suspend fun getMe(): TgResponse<User>
