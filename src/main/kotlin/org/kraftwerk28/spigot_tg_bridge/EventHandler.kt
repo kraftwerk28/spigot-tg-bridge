@@ -7,7 +7,6 @@ import org.bukkit.event.player.AsyncPlayerChatEvent
 import org.bukkit.event.player.PlayerBedEnterEvent
 import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerQuitEvent
-import kotlin.system.measureTimeMillis
 
 class EventHandler(
     private val tgBot: TgBot,
@@ -18,14 +17,9 @@ class EventHandler(
     fun onPlayerChat(event: AsyncPlayerChatEvent) {
         if (!config.logFromMCtoTG) return
         event.run {
-            measureTimeMillis {
-                tgBot.sendMessageToTelegram(
-                    message, player.displayName
-                )
-            }
-            .also {
-                println("Time: $it")
-            }
+            tgBot.sendMessageToTelegram(
+                message, player.displayName
+            )
         }
     }
 

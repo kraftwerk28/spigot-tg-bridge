@@ -100,10 +100,11 @@ class TgBot(
     private suspend fun handleUpdate() {
         val update = updateChan.receive()
         update.message?.text?.let {
-            println("Text: $it")
             commandRegex.matchEntire(it)?.groupValues?.let {
-                commandMap[it[1]]?.let { it(update) } ?: onTextHandler(update)
+                commandMap[it[1]]?.let { it(update) }
             }
+        } ?: run {
+            onTextHandler(update)
         }
     }
 

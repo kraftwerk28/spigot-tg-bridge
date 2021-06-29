@@ -2,16 +2,6 @@ package org.kraftwerk28.spigot_tg_bridge
 
 import com.vdurmont.emoji.EmojiParser
 
-// fun Bot.skipUpdates(lastUpdateID: Long = 0) {
-//     val newUpdates = getUpdates(lastUpdateID)
-
-//     if (newUpdates.isNotEmpty()) {
-//         val lastUpd = newUpdates.last()
-//         if (lastUpd !is Update) return
-//         return skipUpdates(lastUpd.updateId + 1)
-//     }
-// }
-
 fun String.escapeHtml() = this
     .replace("&", "&amp;")
     .replace(">", "&gt;")
