@@ -36,7 +36,8 @@ repositories {
 }
 
 val tgBotVersion = "6.0.4"
-val plugDir = "MinecraftServers/spigot_1.16.5/plugins/"
+val retrofitVersion = "2.7.1"
+val plugDir = "MinecraftServers/spigot_1.17/plugins/"
 val homeDir = System.getProperty("user.home")
 
 tasks {
@@ -44,6 +45,9 @@ tasks {
         archiveFileName.set(
             "spigot-tg-bridge-${spigotApiVersion}-v${pluginVersion}.jar"
         )
+    }
+    build {
+        dependsOn("shadowJar")
     }
 }
 
@@ -57,15 +61,14 @@ tasks.register("pack") {
     finalizedBy("copyArtifacts")
 }
 
-defaultTasks("pack")
-
 dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     compileOnly("org.spigotmc:spigot-api:$spigotApiVersion-R0.1-SNAPSHOT")
-    implementation(
-        "io.github.kotlin-telegram-bot.kotlin-telegram-bot" +
-        ":telegram:$tgBotVersion"
-    )
+    implementation("com.google.code.gson:gson:2.8.7")
+    implementation("com.squareup.retrofit2:retrofit:$retrofitVersion")
+    implementation("com.squareup.retrofit2:converter-gson:$retrofitVersion")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.2.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.0")
     implementation("com.vdurmont:emoji-java:5.1.1")
 }
 

@@ -1,96 +1,127 @@
 package org.kraftwerk28.spigot_tg_bridge
 
-import com.github.kotlintelegrambot.*
-import com.github.kotlintelegrambot.dispatcher.command
-import com.github.kotlintelegrambot.dispatcher.text
-import com.github.kotlintelegrambot.entities.BotCommand
-import com.github.kotlintelegrambot.entities.ParseMode
-import com.github.kotlintelegrambot.entities.Update
-import com.github.kotlintelegrambot.logging.LogLevel
-import com.github.kotlintelegrambot.entities.ChatId
-import okhttp3.logging.HttpLoggingInterceptor
 import org.kraftwerk28.spigot_tg_bridge.Constants as C
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
 
-class TgBot(private val plugin: Plugin, private val config: Configuration) {
-
-    private lateinit var bot: Bot
-
-    init {
-        start(plugin, config)
+class TgBot(
+    private val plugin: Plugin,
+    private val config: Configuration,
+    private val pollTimeout: Int = 30,
+) {
+    private val api: TgApiService
+    val updateChan = Channel<TgApiService.Update>()
+    val scope = CoroutineScope(Dispatchers.Default)
+    val pollJob: Job
+    val handlerJob: Job
+    var currentOffset: Long = -1
+    var me: TgApiService.User
+    var commandRegex: Regex
+    val commandMap = config.commands.run {
+        mapOf(
+            online to ::onlineHandler,
+            time to ::timeHandler,
+            chatID to ::chatIdHandler,
+        )
     }
 
-    fun start(plugin: Plugin, config: Configuration) {
-        val slashRegex = "^/+".toRegex()
-        val commands = config.commands
+    init {
+        api = TgApiService.create(config.botToken)
+        runBlocking {
+            me = api.getMe().result!!
+            // I don't put optional @username in regex since bot is
+            // only used in group chats
+            commandRegex = """^\/(\w+)(?:@${me.username})$""".toRegex()
 
-        skipUpdates()
-        bot = bot {
-            token = config.botToken
-            logLevel = LogLevel.None
 
-            val commandBindings = commands.let {
-                mapOf(
-                    it.time to ::time,
-                    it.online to ::online,
-                    it.chatID to ::chatID
-                )
-            }.filterKeys { it != null }
+            val commands = config.commands.run { listOf(time, online, chatID) }
+                .zip(C.COMMAND_DESC.run {
+                        listOf(timeDesc, onlineDesc, chatIDDesc)
+                })
+                .map { TgApiService.BotCommand(it.first!!, it.second) }
+                .let { TgApiService.SetMyCommands(it) }
 
-            dispatch {
-                commandBindings.forEach { (text, handler) ->
-                    command(text!!.replace(slashRegex, "")) {
-                        handler(update)
+            api.setMyCommands(commands)
+        }
+        pollJob = scope.launch {
+            try {
+                while (true) {
+                    try {
+                        pollUpdates()
+                    } catch (e: Exception) {
+                        e.printStackTrace()
                     }
                 }
-                text { onText(update) }
+            } catch (e: CancellationException) {}
+        }
+        handlerJob = scope.launch {
+            try {
+                while (true) {
+                    handleUpdate()
+                }
+            } catch (e: CancellationException) {}
+        }
+    }
+
+    suspend fun pollUpdates() {
+        val updatesResponse = api
+            .getUpdates(offset = currentOffset, timeout = pollTimeout)
+        updatesResponse.result?.let { updates ->
+            if (!updates.isEmpty()) {
+                updates.forEach { updateChan.send(it) }
+                currentOffset = updates.last().updateId + 1
             }
         }
-        bot.setMyCommands(getBotCommands())
+    }
 
-        config.webhookConfig?.let { _ ->
-            plugin.logger.info("Running in webhook mode.")
-        } ?: run {
-            bot.startPolling()
+    suspend fun handleUpdate() {
+        val update = updateChan.receive()
+        update.message?.text?.let {
+            println("Text: $it")
+            commandRegex.matchEntire(it)?.groupValues?.let {
+                commandMap[it[1]]?.let { it(update) } ?: onTextHandler(update)
+            }
         }
     }
 
     fun stop() {
-        bot.stopPolling()
+        runBlocking {
+            pollJob.cancelAndJoin()
+            handlerJob.cancelAndJoin()
+        }
     }
 
-    private fun time(update: Update) {
+    private suspend fun timeHandler(update: TgApiService.Update) {
         val msg = update.message!!
         if (!config.allowedChats.contains(msg.chat.id)) {
             return
         }
 
         if (plugin.server.worlds.isEmpty()) {
-            bot.sendMessage(
-                ChatId.fromId(msg.chat.id),
+            api.sendMessage(
+                msg.chat.id,
                 "No worlds available",
                 replyToMessageId = msg.messageId
             )
             return
         }
 
-        val t = plugin.server.worlds.first().time
-        val text = when {
-            t <= 12000 -> C.TIMES_OF_DAY.day
-            t <= 13800 -> C.TIMES_OF_DAY.sunset
-            t <= 22200 -> C.TIMES_OF_DAY.night
-            t <= 24000 -> C.TIMES_OF_DAY.sunrise
-            else -> ""
-        } + " ($t)"
+        // TODO: handle multiple worlds
+        val time = plugin.server.worlds.first().time
+        val text = C.TIMES_OF_DAY.run {
+            when {
+                time <= 12000 -> day
+                time <= 13800 -> sunset
+                time <= 22200 -> night
+                time <= 24000 -> sunrise
+                else -> ""
+            }
+        } + " ($time)"
 
-        bot.sendMessage(
-            ChatId.fromId(msg.chat.id),
-            text,
-            replyToMessageId = msg.messageId,
-            parseMode = ParseMode.HTML
-        )
+        api.sendMessage(msg.chat.id, text, replyToMessageId = msg.messageId)
     }
 
-    private fun online(update: Update) {
+    private suspend fun onlineHandler(update: TgApiService.Update) {
         val msg = update.message!!
         if (!config.allowedChats.contains(msg.chat.id)) {
             return
@@ -99,62 +130,40 @@ class TgBot(private val plugin: Plugin, private val config: Configuration) {
         val playerList = plugin.server.onlinePlayers
         val playerStr = plugin.server
             .onlinePlayers
-            .mapIndexed { i, s -> "${i + 1}. ${fullEscape(s.displayName)}" }
+            .mapIndexed { i, s -> "${i + 1}. ${s.displayName.fullEscape()}" }
             .joinToString("\n")
         val text =
             if (playerList.isNotEmpty()) "${config.onlineString}:\n$playerStr"
             else config.nobodyOnlineString
-        bot.sendMessage(
-            ChatId.fromId(msg.chat.id),
-            text,
-            replyToMessageId = msg.messageId,
-            parseMode = ParseMode.HTML
-        )
+        api.sendMessage(msg.chat.id, text, replyToMessageId = msg.messageId)
     }
 
-    private fun chatID(update: Update) {
+    private suspend fun chatIdHandler(update: TgApiService.Update) {
         val msg = update.message!!
-        val chatID = msg.chat.id
+        val chatId = msg.chat.id
         val text = """
             Chat ID:
-            <code>$chatID</code>
+            <code>${chatId}</code>
             paste this id to <code>chats:</code> section in you config.yml file so it will look like this:
         """.trimIndent() +
-                "\n\n<code>chats:\n  # other ids...\n  - ${chatID}</code>"
-        bot.sendMessage(
-            ChatId.fromId(chatID),
-            text,
-            parseMode = ParseMode.HTML,
-            replyToMessageId = msg.messageId
-        )
+                "\n\n<code>chats:\n  # other ids...\n  - ${chatId}</code>"
+        api.sendMessage(chatId, text, replyToMessageId = msg.messageId)
     }
 
     fun sendMessageToTelegram(text: String, username: String? = null) {
-        config.allowedChats.forEach { chatID ->
-            username?.let {
-                bot.sendMessage(
-                    ChatId.fromId(chatID),
-                    formatMsgFromMinecraft(username, text),
-                    parseMode = ParseMode.HTML,
-                )
-            } ?: run {
-                bot.sendMessage(
-                    ChatId.fromId(chatID),
-                    text,
-                    parseMode = ParseMode.HTML,
-                )
+        val messageText = username?.let { formatMsgFromMinecraft(it, text) } ?: text
+        config.allowedChats.forEach { chatId ->
+            scope.launch {
+                delay(1000)
+                api.sendMessage(chatId, messageText)
             }
         }
     }
 
-    private fun onText(update: Update) {
+    private suspend fun onTextHandler(update: TgApiService.Update) {
         if (!config.logFromTGtoMC) return
         val msg = update.message!!
-
-        // Suppress commands to be sent to Minecraft
-        if (msg.text!!.startsWith("/")) return
-
-        plugin.sendMessageToMinecraft(msg.text!!, rawUserMention(msg.from!!))
+        plugin.sendMessageToMinecraft(msg.text!!, msg.from!!.rawUserMention())
     }
 
     private fun formatMsgFromMinecraft(
@@ -162,21 +171,6 @@ class TgBot(private val plugin: Plugin, private val config: Configuration) {
         text: String
     ): String =
         config.minecraftMessageFormat
-            .replace("%username%", fullEscape(username))
-            .replace("%message%", escapeHTML(text))
-
-    private fun getBotCommands(): List<BotCommand> {
-        val cmdList = config.commands.run { listOfNotNull(time, online, chatID) }
-        val descList = C.COMMAND_DESC.run { listOf(timeDesc, onlineDesc, chatIDDesc) }
-        return cmdList.zip(descList).map { BotCommand(it.first, it.second) }
-    }
-
-    private fun skipUpdates() {
-        // Creates a temporary bot w/ 0 timeout to skip updates
-        bot {
-            token = config.botToken
-            timeout = 0
-            logLevel = LogLevel.None
-        }.skipUpdates()
-    }
+            .replace("%username%", username.fullEscape())
+            .replace("%message%", text.escapeHtml())
 }

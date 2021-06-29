@@ -36,27 +36,27 @@ class Plugin : JavaPlugin() {
 
     override fun onDisable() {
         if (!config.isEnabled) return
-        config.serverStopMessage?.let { message ->
-            tgBot?.sendMessageToTelegram(message)
+        config.serverStopMessage?.let {
+            tgBot?.sendMessageToTelegram(it)
         }
         logger.info("Plugin stopped.")
     }
 
-    fun sendMessageToMinecraft(text: String, username: String? = null) {
-        var prepared = config.telegramMessageFormat
-            .replace(C.MESSAGE_TEXT_PLACEHOLDER, escapeEmoji(text))
-        username?.let {
-            prepared = prepared
-                .replace(C.USERNAME_PLACEHOLDER, escapeEmoji(it))
-        }
-        server.broadcastMessage(prepared)
-    }
+    fun sendMessageToMinecraft(text: String, username: String? = null) =
+        config.telegramMessageFormat
+            .replace(C.MESSAGE_TEXT_PLACEHOLDER, text.escapeEmoji())
+            .run {
+                username?.let { username ->
+                    replace(C.USERNAME_PLACEHOLDER, username.escapeEmoji())
+                } ?: this
+            }
+            .also { server.broadcastMessage(it) }
 
     fun reload() {
         logger.info(C.INFO.reloading)
         config.reload(this)
         tgBot?.stop()
-        tgBot?.start(this, config)
+        tgBot = TgBot(this, config)
         logger.info(C.INFO.reloadComplete)
     }
 }

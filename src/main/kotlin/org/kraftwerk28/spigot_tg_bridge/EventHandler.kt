@@ -7,6 +7,7 @@ import org.bukkit.event.player.AsyncPlayerChatEvent
 import org.bukkit.event.player.PlayerBedEnterEvent
 import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerQuitEvent
+import kotlin.system.measureTimeMillis
 
 class EventHandler(
     private val tgBot: TgBot,
@@ -17,16 +18,21 @@ class EventHandler(
     fun onPlayerChat(event: AsyncPlayerChatEvent) {
         if (!config.logFromMCtoTG) return
         event.run {
-            tgBot.sendMessageToTelegram(
-                message, player.displayName
-            )
+            measureTimeMillis {
+                tgBot.sendMessageToTelegram(
+                    message, player.displayName
+                )
+            }
+            .also {
+                println("Time: $it")
+            }
         }
     }
 
     @EventHandler
     fun onPlayerJoin(event: PlayerJoinEvent) {
-         if (!config.logJoinLeave || config.joinString == null) return
-        val username = fullEscape(event.player.displayName)
+        if (!config.logJoinLeave || config.joinString == null) return
+        val username = event.player.displayName.fullEscape()
         val text = config.joinString!!.replace("%username%", username)
         tgBot.sendMessageToTelegram(text)
     }
@@ -34,7 +40,7 @@ class EventHandler(
     @EventHandler
     fun onPlayerLeave(event: PlayerQuitEvent) {
         if (!config.logJoinLeave || config.leaveString == null) return
-        val username = fullEscape(event.player.displayName)
+        val username = event.player.displayName.fullEscape()
         val text = config.leaveString!!.replace("%username%", username)
         tgBot.sendMessageToTelegram(text)
     }
@@ -43,7 +49,7 @@ class EventHandler(
     fun onPlayerDied(event: PlayerDeathEvent) {
         if (!config.logDeath) return
         event.deathMessage?.let {
-            val username = fullEscape(event.entity.displayName)
+            val username = event.entity.displayName.fullEscape()
             val text = it.replace(username, "<i>$username</i>")
             tgBot.sendMessageToTelegram(text)
         }
