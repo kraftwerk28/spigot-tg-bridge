@@ -177,7 +177,6 @@ class TgBot(
         val messageText = username?.let { formatMsgFromMinecraft(it, text) } ?: text
         config.allowedChats.forEach { chatId ->
             scope.launch {
-                delay(1000)
                 api.sendMessage(chatId, messageText)
             }
         }

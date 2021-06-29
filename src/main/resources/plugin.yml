@@ -1,10 +1,10 @@
 name: SpigotTGBridge
-version: 0.0.15
-api-version: '1.15'
+version: "0.16"
+api-version: "1.15"
 main: org.kraftwerk28.spigot_tg_bridge.Plugin
 description: Telegram <-> Minecraft communication plugin for Spigot.
 load: STARTUP
 commands:
   tgbridge_reload:
-    description: 'Reload Spigot TG bridge plugin'
+    description: "Reload Spigot TG bridge plugin"
     usage: /<command>
