@@ -3,6 +3,11 @@ package org.kraftwerk28.spigot_tg_bridge
 import org.kraftwerk28.spigot_tg_bridge.Constants as C
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import java.time.Duration
 
 class TgBot(
     private val plugin: Plugin,
@@ -10,14 +15,15 @@ class TgBot(
     private val pollTimeout: Int = 30,
 ) {
     private val api: TgApiService
-    val updateChan = Channel<TgApiService.Update>()
-    val scope = CoroutineScope(Dispatchers.Default)
-    val pollJob: Job
-    val handlerJob: Job
-    var currentOffset: Long = -1
-    var me: TgApiService.User
-    var commandRegex: Regex
-    val commandMap = config.commands.run {
+    private val client: OkHttpClient
+    private val updateChan = Channel<TgApiService.Update>()
+    private val scope = CoroutineScope(Dispatchers.Default)
+    private val pollJob: Job
+    private val handlerJob: Job
+    private var currentOffset: Long = -1
+    private var me: TgApiService.User
+    private var commandRegex: Regex
+    private val commandMap = config.commands.run {
         mapOf(
             online to ::onlineHandler,
             time to ::timeHandler,
@@ -26,14 +32,28 @@ class TgBot(
     }
 
     init {
-        api = TgApiService.create(config.botToken)
+        val interceptor = HttpLoggingInterceptor().apply {
+            level = HttpLoggingInterceptor.Level.NONE;
+        }
+
+        client = OkHttpClient
+            .Builder()
+            .addInterceptor(interceptor)
+            .readTimeout(Duration.ZERO)
+            .build();
+
+        api = Retrofit.Builder()
+            .baseUrl("https://api.telegram.org/bot${config.botToken}/")
+            .client(client)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(TgApiService::class.java)
+
         runBlocking {
             me = api.getMe().result!!
-            // I don't put optional @username in regex since bot is
-            // only used in group chats
+            // I intentionally don't put optional @username in regex
+            // since bot is only used in group chats
             commandRegex = """^\/(\w+)(?:@${me.username})$""".toRegex()
-
-
             val commands = config.commands.run { listOf(time, online, chatID) }
                 .zip(C.COMMAND_DESC.run {
                         listOf(timeDesc, onlineDesc, chatIDDesc)
@@ -41,8 +61,10 @@ class TgBot(
                 .map { TgApiService.BotCommand(it.first!!, it.second) }
                 .let { TgApiService.SetMyCommands(it) }
 
+            api.deleteWebhook(true)
             api.setMyCommands(commands)
         }
+
         pollJob = scope.launch {
             try {
                 while (true) {
@@ -54,6 +76,7 @@ class TgBot(
                 }
             } catch (e: CancellationException) {}
         }
+
         handlerJob = scope.launch {
             try {
                 while (true) {
@@ -63,7 +86,7 @@ class TgBot(
         }
     }
 
-    suspend fun pollUpdates() {
+    private suspend fun pollUpdates() {
         val updatesResponse = api
             .getUpdates(offset = currentOffset, timeout = pollTimeout)
         updatesResponse.result?.let { updates ->
@@ -74,7 +97,7 @@ class TgBot(
         }
     }
 
-    suspend fun handleUpdate() {
+    private suspend fun handleUpdate() {
         val update = updateChan.receive()
         update.message?.text?.let {
             println("Text: $it")
@@ -85,6 +108,10 @@ class TgBot(
     }
 
     fun stop() {
+        client.run {
+            dispatcher.executorService.shutdown()
+            connectionPool.evictAll()
+        }
         runBlocking {
             pollJob.cancelAndJoin()
             handlerJob.cancelAndJoin()
@@ -96,7 +123,6 @@ class TgBot(
         if (!config.allowedChats.contains(msg.chat.id)) {
             return
         }
-
         if (plugin.server.worlds.isEmpty()) {
             api.sendMessage(
                 msg.chat.id,
@@ -105,7 +131,6 @@ class TgBot(
             )
             return
         }
-
         // TODO: handle multiple worlds
         val time = plugin.server.worlds.first().time
         val text = C.TIMES_OF_DAY.run {
@@ -117,7 +142,6 @@ class TgBot(
                 else -> ""
             }
         } + " ($time)"
-
         api.sendMessage(msg.chat.id, text, replyToMessageId = msg.messageId)
     }
 
@@ -126,7 +150,6 @@ class TgBot(
         if (!config.allowedChats.contains(msg.chat.id)) {
             return
         }
-
         val playerList = plugin.server.onlinePlayers
         val playerStr = plugin.server
             .onlinePlayers

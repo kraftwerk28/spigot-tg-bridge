@@ -1,12 +1,7 @@
 package org.kraftwerk28.spigot_tg_bridge
 
-import okhttp3.logging.HttpLoggingInterceptor
-import okhttp3.OkHttpClient
 import com.google.gson.annotations.SerializedName as Name
-import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.*
-import java.time.Duration
-import retrofit2.Retrofit
 
 interface TgApiService {
     data class TgResponse<T>(val ok: Boolean, val result: T?, val description: String?)
@@ -74,23 +69,4 @@ interface TgApiService {
     suspend fun setMyCommands(
         @Body commands: SetMyCommands,
     ): TgResponse<Boolean>
-
-    companion object {
-        fun create(token: String): TgApiService {
-            val interceptor = HttpLoggingInterceptor().apply {
-                level = HttpLoggingInterceptor.Level.NONE;
-            }
-            val client = OkHttpClient
-                .Builder()
-                .addInterceptor(interceptor)
-                .readTimeout(Duration.ZERO)
-                .build();
-            val r = Retrofit.Builder()
-                .baseUrl("https://api.telegram.org/bot$token/")
-                .client(client)
-                .addConverterFactory(GsonConverterFactory.create())
-                .build()
-            return r.create(TgApiService::class.java)
-        }
-    }
 }
