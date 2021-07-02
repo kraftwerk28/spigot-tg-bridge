@@ -103,9 +103,9 @@ class TgBot(
         update.message?.text?.let {
             commandRegex.matchEntire(it)?.groupValues?.let {
                 commandMap[it[1]]?.let { it(update) }
+            } ?: run {
+                onTextHandler(update)
             }
-        } ?: run {
-            onTextHandler(update)
         }
     }
 
@@ -185,9 +185,10 @@ class TgBot(
     }
 
     private suspend fun onTextHandler(update: TgApiService.Update) {
-        if (!config.logFromTGtoMC) return
         val msg = update.message!!
-        plugin.sendMessageToMinecraft(msg.text!!, msg.from!!.rawUserMention())
+        if (!config.logFromTGtoMC || msg.from == null)
+            return
+        plugin.sendMessageToMinecraft(msg.text!!, msg.from.rawUserMention())
     }
 
     private fun formatMsgFromMinecraft(
