@@ -6,9 +6,11 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 buildscript {
     repositories {
         mavenCentral()
+        maven("https://plugins.gradle.org/m2/")
     }
     dependencies {
-        classpath(group = "org.yaml", name = "snakeyaml", version = "1.26")
+        classpath("org.yaml:snakeyaml:1.26")
+        classpath("org.jlleitschuh.gradle:ktlint-gradle:10.1.0")
     }
 }
 
@@ -17,11 +19,12 @@ plugins {
     id("com.github.johnrengelman.shadow") version "5.2.0"
 }
 
+apply(plugin = "org.jlleitschuh.gradle.ktlint")
+
 group = "org.kraftwerk28"
 
-val cfg: Map<String, String> = Yaml().load(
-    FileInputStream("src/main/resources/plugin.yml")
-)
+val cfg: Map<String, String> = Yaml()
+    .load(FileInputStream("$projectDir/src/main/resources/plugin.yml"))
 val pluginVersion = cfg.get("version")
 val spigotApiVersion = cfg.get("api-version")
 version = pluginVersion as Any

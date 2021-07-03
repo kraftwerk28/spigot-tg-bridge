@@ -57,11 +57,11 @@ interface TgApiService {
     ): TgResponse<Message>
 
     @GET("getUpdates")
-    fun getUpdates(
+    suspend fun getUpdates(
         @Query("offset") offset: Long,
         @Query("limit") limit: Int = 100,
         @Query("timeout") timeout: Int = 0,
-    ): Call<TgResponse<List<Update>>>
+    ): TgResponse<List<Update>>
 
     @GET("getMe")
     suspend fun getMe(): TgResponse<User>

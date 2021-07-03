@@ -29,25 +29,22 @@ class Plugin : JavaPlugin() {
         }
         getCommand(C.COMMANDS.PLUGIN_RELOAD)?.setExecutor(cmdHandler)
 
-        // Notify Telegram groups about server start
         config.serverStartMessage?.let { message ->
             tgBot?.sendMessageToTelegram(message)
         }
-        logger.info("Plugin started.")
     }
 
     fun loadBot() {
-        tgBot?.let { it.stop() }
+        tgBot?.run { stop() }
         tgBot = TgBot(this, config)
     }
 
     override fun onDisable() {
-        if (!config.isEnabled)
-            return
+        if (!config.isEnabled) return
         config.serverStopMessage?.let {
-            tgBot?.sendMessageToTelegram(it)
+            tgBot?.sendMessageToTelegram(it, blocking = true)
         }
-        logger.info("Plugin stopped.")
+        tgBot?.run { stop() }
     }
 
     fun sendMessageToMinecraft(

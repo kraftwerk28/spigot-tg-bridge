@@ -10,6 +10,10 @@ import retrofit2.Call
 import retrofit2.converter.gson.GsonConverterFactory
 import java.time.Duration
 
+typealias UpdateRequest = Call<
+    TgApiService.TgResponse<List<TgApiService.Update>>
+>?
+
 class TgBot(
     private val plugin: Plugin,
     private val config: Configuration,
@@ -66,40 +70,47 @@ class TgBot(
     }
 
     private fun initPolling() = scope.launch {
-        var request:
-            Call<TgApiService.TgResponse<List<TgApiService.Update>>>? = null
-        try {
-            while (true) {
-                try {
-                    request = api.getUpdates(
-                        offset = currentOffset,
-                        timeout = pollTimeout,
-                    )
-                    val response = request.execute().body()
-                    response?.result?.let { updates ->
+        loop@ while (true) {
+            try {
+                api.getUpdates(offset = currentOffset, timeout = pollTimeout)
+                    .result?.let { updates ->
                         if (!updates.isEmpty()) {
                             updates.forEach { updateChan.send(it) }
                             currentOffset = updates.last().updateId + 1
                         }
                     }
-                } catch (e: Exception) {
-                    e.printStackTrace()
+            } catch (e: Exception) {
+                when (e) {
+                    is CancellationException -> break@loop
+                    else -> {
+                        e.printStackTrace()
+                        continue@loop
+                    }
                 }
             }
-        } catch (e: CancellationException) {
-            request?.cancel()
         }
     }
 
     private fun initHandler() = scope.launch {
-        try {
-            while (true) {
+        loop@ while (true) {
+            try {
                 handleUpdate(updateChan.receive())
+            } catch (e: Exception) {
+                when (e) {
+                    is CancellationException -> break@loop
+                    else -> {
+                        e.printStackTrace()
+                        continue@loop
+                    }
+                }
             }
-        } catch (e: CancellationException) {}
+        }
     }
 
     suspend fun handleUpdate(update: TgApiService.Update) {
+        // Ignore PM or channel
+        if (listOf("private", "channel").contains(update.message?.chat?.type))
+            return
         update.message?.text?.let {
             commandRegex.matchEntire(it)?.groupValues?.let {
                 commandMap[it[1]]?.let { it(update) }
@@ -167,23 +178,14 @@ class TgBot(
         val msg = update.message!!
         val chatId = msg.chat.id
         val text = """
-            Chat ID:
-            <code>${chatId}</code>
-            paste this id to <code>chats:</code> section in you config.yml file so it will look like this:
-        """.trimIndent() +
-                "\n\n<code>chats:\n  # other ids...\n  - ${chatId}</code>"
+        |Chat ID: <code>${chatId}</code>.
+        |Copy this id to <code>chats</code> section in your <b>config.yml</b> file so it will look like this:
+        |
+        |<pre>chats:
+        |  # other ids...
+        |  - ${chatId}</pre>
+        """.trimMargin()
         api.sendMessage(chatId, text, replyToMessageId = msg.messageId)
-    }
-
-    fun sendMessageToTelegram(text: String, username: String? = null) {
-        val messageText = username?.let {
-            formatMsgFromMinecraft(it, text)
-        } ?: text
-        config.allowedChats.forEach { chatId ->
-            scope.launch {
-                api.sendMessage(chatId, messageText)
-            }
-        }
     }
 
     private suspend fun onTextHandler(update: TgApiService.Update) {
@@ -197,11 +199,22 @@ class TgBot(
         )
     }
 
-    private fun formatMsgFromMinecraft(
-        username: String,
-        text: String
-    ): String =
-        config.telegramFormat
-            .replace(C.USERNAME_PLACEHOLDER, username.fullEscape())
-            .replace(C.MESSAGE_TEXT_PLACEHOLDER, text.escapeHtml())
+    fun sendMessageToTelegram(
+        text: String,
+        username: String? = null,
+        blocking: Boolean = false,
+    ) {
+        val formatted = username?.let {
+            config.telegramFormat
+                .replace(C.USERNAME_PLACEHOLDER, username.fullEscape())
+                .replace(C.MESSAGE_TEXT_PLACEHOLDER, text.escapeHtml())
+        } ?: text
+        scope.launch {
+            config.allowedChats.forEach { chatId ->
+                api.sendMessage(chatId, formatted)
+            }
+        }.also {
+            if (blocking) runBlocking { it.join() }
+        }
+    }
 }

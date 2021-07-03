@@ -36,8 +36,9 @@ class Configuration(plugin: Plugin) {
             // plugin.saveResource(C.configFilename, false);
             throw Exception(C.WARN.noConfigWarning)
         }
-
         val pluginConfig = plugin.getConfig()
+        pluginConfig.load(cfgFile)
+
         pluginConfig.getString("minecraftMessageFormat")?.let {
             plugin.logger.warning("""
                 Config option "minecraftMessageFormat" is deprecated.
@@ -47,6 +48,7 @@ class Configuration(plugin: Plugin) {
             pluginConfig.set("minecraftMessageFormat", null)
             plugin.saveConfig()
         }
+
         pluginConfig.getString("telegramMessageFormat")?.let {
             plugin.logger.warning("""
                 Config option "telegramMessageFormat" is deprecated.
