@@ -1,14 +1,14 @@
 package org.kraftwerk28.spigot_tg_bridge
 
-import org.bukkit.configuration.file.YamlConfiguration
+import org.bukkit.configuration.file.FileConfiguration
 
-class Commands(yamlCfg: YamlConfiguration) {
+class Commands(cfg: FileConfiguration) {
     val time: String?
     val online: String?
     val chatID: String?
 
     init {
-        yamlCfg.run {
+        cfg.run {
             time = getString("commands.time")
             online = getString("commands.online")
             chatID = getString("commands.chat_id")

@@ -2,20 +2,20 @@ enable: true
 botToken: abcdef123456789
 chats:
   - -1234567890123
-serverStartMessage: 'Server started.'
-serverStopMessage: 'Server stopped.'
+serverStartMessage: "Server started."
+serverStopMessage: "Server stopped."
 logJoinLeave: true
 logFromMCtoTG: true
 logFromTGtoMC: true
 logPlayerDeath: false
 logPlayerAsleep: false
-telegramMessageFormat: '<%username%>: %message%'
-minecraftMessageFormat: '<i>%username%</i>: %message%'
+minecraftFormat: "<%username%>: %message%"
+telegramFormat: "<i>%username%</i>: %message%"
 strings:
-  online: '<b>Online</b>'
-  nobodyOnline: '<b>Nobody online...</b>'
-  joined: '<i>%username%</i> joined.'
-  left: '<i>%username%</i> left.'
+  online: "<b>Online</b>"
+  nobodyOnline: "<b>Nobody online...</b>"
+  joined: "<i>%username%</i> joined."
+  left: "<i>%username%</i> left."
 commands:
   time: 'time'
   online: 'online'

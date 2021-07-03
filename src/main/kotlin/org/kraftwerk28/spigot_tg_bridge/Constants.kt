@@ -19,6 +19,7 @@ object Constants {
     }
     const val USERNAME_PLACEHOLDER = "%username%"
     const val MESSAGE_TEXT_PLACEHOLDER = "%message%"
+    const val CHAT_TITLE_PLACEHOLDER = "%chat%"
     object COMMANDS {
         const val PLUGIN_RELOAD = "tgbridge_reload"
     }

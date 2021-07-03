@@ -176,7 +176,9 @@ class TgBot(
     }
 
     fun sendMessageToTelegram(text: String, username: String? = null) {
-        val messageText = username?.let { formatMsgFromMinecraft(it, text) } ?: text
+        val messageText = username?.let {
+            formatMsgFromMinecraft(it, text)
+        } ?: text
         config.allowedChats.forEach { chatId ->
             scope.launch {
                 api.sendMessage(chatId, messageText)
@@ -188,14 +190,18 @@ class TgBot(
         val msg = update.message!!
         if (!config.logFromTGtoMC || msg.from == null)
             return
-        plugin.sendMessageToMinecraft(msg.text!!, msg.from.rawUserMention())
+        plugin.sendMessageToMinecraft(
+            text = msg.text!!,
+            username = msg.from.rawUserMention(),
+            chatTitle = msg.chat.title,
+        )
     }
 
     private fun formatMsgFromMinecraft(
         username: String,
         text: String
     ): String =
-        config.minecraftMessageFormat
-            .replace("%username%", username.fullEscape())
-            .replace("%message%", text.escapeHtml())
+        config.telegramFormat
+            .replace(C.USERNAME_PLACEHOLDER, username.fullEscape())
+            .replace(C.MESSAGE_TEXT_PLACEHOLDER, text.escapeHtml())
 }

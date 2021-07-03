@@ -25,17 +25,17 @@ class EventHandler(
 
     @EventHandler
     fun onPlayerJoin(event: PlayerJoinEvent) {
-        if (!config.logJoinLeave || config.joinString == null) return
+        if (!config.logJoinLeave) return
         val username = event.player.displayName.fullEscape()
-        val text = config.joinString!!.replace("%username%", username)
+        val text = config.joinString.replace("%username%", username)
         tgBot.sendMessageToTelegram(text)
     }
 
     @EventHandler
     fun onPlayerLeave(event: PlayerQuitEvent) {
-        if (!config.logJoinLeave || config.leaveString == null) return
+        if (!config.logJoinLeave) return
         val username = event.player.displayName.fullEscape()
-        val text = config.leaveString!!.replace("%username%", username)
+        val text = config.leaveString.replace("%username%", username)
         tgBot.sendMessageToTelegram(text)
     }
 
@@ -52,7 +52,8 @@ class EventHandler(
     @EventHandler
     fun onPlayerAsleep(event: PlayerBedEnterEvent) {
         if (!config.logPlayerAsleep) return
-        if (event.bedEnterResult != PlayerBedEnterEvent.BedEnterResult.OK) return
+        if (event.bedEnterResult != PlayerBedEnterEvent.BedEnterResult.OK)
+            return
         val text = "<i>${event.player.displayName}</i> fell asleep."
         tgBot.sendMessageToTelegram(text)
     }

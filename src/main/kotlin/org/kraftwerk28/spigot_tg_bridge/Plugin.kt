@@ -8,11 +8,11 @@ import org.kraftwerk28.spigot_tg_bridge.Constants as C
 class Plugin : JavaPlugin() {
 
     var tgBot: TgBot? = null
-    val config: Configuration = Configuration()
+    lateinit var config: Configuration
 
     override fun onEnable() {
         try {
-            config.load(this)
+            config = Configuration(this)
         } catch (e: Exception) {
             logger.warning(e.message)
             return
@@ -42,26 +42,36 @@ class Plugin : JavaPlugin() {
     }
 
     override fun onDisable() {
-        if (!config.isEnabled) return
+        if (!config.isEnabled)
+            return
         config.serverStopMessage?.let {
             tgBot?.sendMessageToTelegram(it)
         }
         logger.info("Plugin stopped.")
     }
 
-    fun sendMessageToMinecraft(text: String, username: String? = null) =
-        config.telegramMessageFormat
+    fun sendMessageToMinecraft(
+        text: String,
+        username: String? = null,
+        chatTitle: String? = null,
+    ) =
+        config.minecraftFormat
             .replace(C.MESSAGE_TEXT_PLACEHOLDER, text.escapeEmoji())
             .run {
-                username?.let { username ->
-                    replace(C.USERNAME_PLACEHOLDER, username.escapeEmoji())
+                username?.let {
+                    replace(C.USERNAME_PLACEHOLDER, it.escapeEmoji())
+                } ?: this
+            }
+            .run {
+                chatTitle?.let {
+                    replace(C.CHAT_TITLE_PLACEHOLDER, it)
                 } ?: this
             }
             .also { server.broadcastMessage(it) }
 
     fun reload() {
         logger.info(C.INFO.reloading)
-        config.reload(this)
+        config = Configuration(this)
         loadBot()
         logger.info(C.INFO.reloadComplete)
     }
