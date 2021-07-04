@@ -121,10 +121,6 @@ class TgBot(
     }
 
     fun stop() {
-        client.run {
-            dispatcher.executorService.shutdown()
-            connectionPool.evictAll()
-        }
         runBlocking {
             pollJob.cancelAndJoin()
             handlerJob.cancelAndJoin()

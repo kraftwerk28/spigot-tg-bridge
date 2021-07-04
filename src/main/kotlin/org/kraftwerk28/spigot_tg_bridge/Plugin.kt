@@ -2,12 +2,14 @@ package org.kraftwerk28.spigot_tg_bridge
 
 import com.vdurmont.emoji.EmojiParser
 import org.bukkit.plugin.java.JavaPlugin
+import org.bukkit.event.HandlerList
 import java.lang.Exception
 import org.kraftwerk28.spigot_tg_bridge.Constants as C
 
 class Plugin : JavaPlugin() {
 
     var tgBot: TgBot? = null
+    var eventHandler: EventHandler? = null
     lateinit var config: Configuration
 
     override fun onEnable() {
@@ -22,11 +24,14 @@ class Plugin : JavaPlugin() {
             return
 
         val cmdHandler = CommandHandler(this)
-        loadBot()
-        tgBot?.let { bot ->
-            val eventHandler = EventHandler(bot, config)
-            server.pluginManager.registerEvents(eventHandler, this)
+
+        tgBot?.run { stop() }
+        tgBot = TgBot(this, config).also { bot ->
+            eventHandler = EventHandler(bot, config).also {
+                server.pluginManager.registerEvents(it, this)
+            }
         }
+
         getCommand(C.COMMANDS.PLUGIN_RELOAD)?.setExecutor(cmdHandler)
 
         config.serverStartMessage?.let { message ->
@@ -34,17 +39,14 @@ class Plugin : JavaPlugin() {
         }
     }
 
-    fun loadBot() {
-        tgBot?.run { stop() }
-        tgBot = TgBot(this, config)
-    }
-
     override fun onDisable() {
         if (!config.isEnabled) return
         config.serverStopMessage?.let {
             tgBot?.sendMessageToTelegram(it, blocking = true)
         }
+        eventHandler?.let { HandlerList.unregisterAll(it) }
         tgBot?.run { stop() }
+        tgBot = null
     }
 
     fun sendMessageToMinecraft(
@@ -67,9 +69,16 @@ class Plugin : JavaPlugin() {
             .also { server.broadcastMessage(it) }
 
     fun reload() {
+        if (!config.isEnabled) return
         logger.info(C.INFO.reloading)
         config = Configuration(this)
-        loadBot()
+        eventHandler?.let { HandlerList.unregisterAll(it) }
+        tgBot?.run { stop() }
+        tgBot = TgBot(this, config).also { bot ->
+            eventHandler = EventHandler(bot, config).also {
+                server.pluginManager.registerEvents(it, this)
+            }
+        }
         logger.info(C.INFO.reloadComplete)
     }
 }
