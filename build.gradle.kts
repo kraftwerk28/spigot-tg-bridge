@@ -17,9 +17,8 @@ buildscript {
 plugins {
     id("org.jetbrains.kotlin.jvm") version "1.4.31"
     id("com.github.johnrengelman.shadow") version "5.2.0"
+    id("org.jlleitschuh.gradle.ktlint") version "10.1.0"
 }
-
-apply(plugin = "org.jlleitschuh.gradle.ktlint")
 
 group = "org.kraftwerk28"
 
@@ -27,6 +26,7 @@ val cfg: Map<String, String> = Yaml()
     .load(FileInputStream("$projectDir/src/main/resources/plugin.yml"))
 val pluginVersion = cfg.get("version")
 val spigotApiVersion = cfg.get("api-version")
+val exposedVersion = "0.31.1"
 version = pluginVersion as Any
 
 repositories {
@@ -38,31 +38,9 @@ repositories {
     maven(url = "https://oss.sonatype.org/content/repositories/snapshots/")
 }
 
-val tgBotVersion = "6.0.4"
 val retrofitVersion = "2.7.1"
 val plugDir = "MinecraftServers/spigot_1.17/plugins/"
 val homeDir = System.getProperty("user.home")
-
-tasks {
-    named<ShadowJar>("shadowJar") {
-        archiveFileName.set(
-            "spigot-tg-bridge-${spigotApiVersion}-v${pluginVersion}.jar"
-        )
-    }
-    build {
-        dependsOn("shadowJar")
-    }
-}
-
-tasks.register<Copy>("copyArtifacts") {
-    from(tasks.shadowJar)
-    into(File(homeDir, plugDir))
-}
-
-tasks.register("pack") {
-    dependsOn("shadowJar")
-    finalizedBy("copyArtifacts")
-}
 
 dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
@@ -75,6 +53,21 @@ dependencies {
     implementation("com.vdurmont:emoji-java:5.1.1")
 }
 
-tasks.withType<KotlinCompile> {
-    kotlinOptions.jvmTarget = "1.8"
+defaultTasks("shadowJar")
+
+tasks {
+    named<ShadowJar>("shadowJar") {
+        archiveFileName.set(
+            "spigot-tg-bridge-${spigotApiVersion}-v${pluginVersion}.jar"
+        )
+    }
+    register<Copy>("copyArtifacts") {
+        from("shadowJar")
+        into(File(homeDir, plugDir))
+    }
+    register("pack") {
+        description = "[For development only!] Build project and copy .jar into servers directory"
+        dependsOn("shadowJar")
+        finalizedBy("copyArtifacts")
+    }
 }
