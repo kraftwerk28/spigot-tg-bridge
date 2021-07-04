@@ -2,7 +2,7 @@ package org.kraftwerk28.spigot_tg_bridge
 
 import org.bukkit.configuration.file.FileConfiguration
 
-class Commands(cfg: FileConfiguration) {
+class BotCommands(cfg: FileConfiguration) {
     val time: String?
     val online: String?
     val chatID: String?

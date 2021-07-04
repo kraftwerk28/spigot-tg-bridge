@@ -1,6 +1,5 @@
 package org.kraftwerk28.spigot_tg_bridge
 
-import org.bukkit.configuration.file.YamlConfiguration
 import java.io.File
 import org.kraftwerk28.spigot_tg_bridge.Constants as C
 
@@ -26,10 +25,10 @@ class Configuration(plugin: Plugin) {
     val allowWebhook: Boolean
     val webhookConfig: Map<String, Any>?
 
-    var commands: Commands
+    var commands: BotCommands
 
     init {
-        val cfgFile = File(plugin.dataFolder, C.configFilename);
+        val cfgFile = File(plugin.dataFolder, C.configFilename)
         if (!cfgFile.exists()) {
             cfgFile.parentFile.mkdirs()
             plugin.saveDefaultConfig()
@@ -40,20 +39,24 @@ class Configuration(plugin: Plugin) {
         pluginConfig.load(cfgFile)
 
         pluginConfig.getString("minecraftMessageFormat")?.let {
-            plugin.logger.warning("""
+            plugin.logger.warning(
+                """
                 Config option "minecraftMessageFormat" is deprecated.
                 Moved it to new key "telegramFormat"
-            """.trimIndent().replace('\n', ' '))
+                """.trimIndent().replace('\n', ' ')
+            )
             pluginConfig.set("telegramFormat", it)
             pluginConfig.set("minecraftMessageFormat", null)
             plugin.saveConfig()
         }
 
         pluginConfig.getString("telegramMessageFormat")?.let {
-            plugin.logger.warning("""
+            plugin.logger.warning(
+                """
                 Config option "telegramMessageFormat" is deprecated.
                 Moved it to new key "minecraftFormat"
-            """.trimIndent().replace('\n', ' '))
+                """.trimIndent().replace('\n', ' ')
+            )
             pluginConfig.set("minecraftFormat", it)
             pluginConfig.set("telegramMessageFormat", null)
             plugin.saveConfig()
@@ -92,7 +95,7 @@ class Configuration(plugin: Plugin) {
             leaveString = getString("strings.left", "<i>%username%</i> left.")!!
             logDeath = getBoolean("logPlayerDeath", false)
             logPlayerAsleep = getBoolean("logPlayerAsleep", false)
-            commands = Commands(this)
+            commands = BotCommands(this)
         }
     }
 

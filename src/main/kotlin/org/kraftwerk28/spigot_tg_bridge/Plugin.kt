@@ -1,8 +1,7 @@
 package org.kraftwerk28.spigot_tg_bridge
 
-import com.vdurmont.emoji.EmojiParser
-import org.bukkit.plugin.java.JavaPlugin
 import org.bukkit.event.HandlerList
+import org.bukkit.plugin.java.JavaPlugin
 import java.lang.Exception
 import org.kraftwerk28.spigot_tg_bridge.Constants as C
 
@@ -33,7 +32,6 @@ class Plugin : JavaPlugin() {
                 tgBot?.sendMessageToTelegram(message)
             }
         }
-
     }
 
     override fun onDisable() {

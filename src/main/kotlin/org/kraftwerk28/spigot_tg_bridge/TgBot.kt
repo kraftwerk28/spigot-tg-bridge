@@ -1,18 +1,20 @@
 package org.kraftwerk28.spigot_tg_bridge
 
-import org.kraftwerk28.spigot_tg_bridge.Constants as C
-import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
-import okhttp3.logging.HttpLoggingInterceptor
-import retrofit2.Retrofit
 import retrofit2.Call
+import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.time.Duration
+import org.kraftwerk28.spigot_tg_bridge.Constants as C
 
-typealias UpdateRequest = Call<
-    TgApiService.TgResponse<List<TgApiService.Update>>
->?
+typealias UpdateRequest = Call<TgApiService.TgResponse<List<TgApiService.Update>>>?
 
 class TgBot(
     private val plugin: Plugin,
@@ -40,7 +42,7 @@ class TgBot(
         client = OkHttpClient
             .Builder()
             .readTimeout(Duration.ZERO)
-            .build();
+            .build()
 
         api = Retrofit.Builder()
             .baseUrl("https://api.telegram.org/bot${config.botToken}/")
@@ -55,9 +57,11 @@ class TgBot(
             // since bot is only used in group chats
             commandRegex = """^\/(\w+)(?:@${me.username})$""".toRegex()
             val commands = config.commands.run { listOf(time, online, chatID) }
-                .zip(C.COMMAND_DESC.run {
+                .zip(
+                    C.COMMAND_DESC.run {
                         listOf(timeDesc, onlineDesc, chatIDDesc)
-                })
+                    }
+                )
                 .map { TgApiService.BotCommand(it.first!!, it.second) }
                 .let { TgApiService.SetMyCommands(it) }
 
@@ -174,12 +178,12 @@ class TgBot(
         val msg = update.message!!
         val chatId = msg.chat.id
         val text = """
-        |Chat ID: <code>${chatId}</code>.
+        |Chat ID: <code>$chatId</code>.
         |Copy this id to <code>chats</code> section in your <b>config.yml</b> file so it will look like this:
         |
         |<pre>chats:
         |  # other ids...
-        |  - ${chatId}</pre>
+        |  - $chatId</pre>
         """.trimMargin()
         api.sendMessage(chatId, text, replyToMessageId = msg.messageId)
     }

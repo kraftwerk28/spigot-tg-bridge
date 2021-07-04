@@ -1,8 +1,10 @@
 package org.kraftwerk28.spigot_tg_bridge
 
+import retrofit2.http.Body
+import retrofit2.http.GET
+import retrofit2.http.POST
+import retrofit2.http.Query
 import com.google.gson.annotations.SerializedName as Name
-import retrofit2.Call
-import retrofit2.http.*
 
 interface TgApiService {
     data class TgResponse<T>(val ok: Boolean, val result: T?, val description: String?)
