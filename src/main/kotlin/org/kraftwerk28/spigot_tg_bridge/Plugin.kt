@@ -67,10 +67,9 @@ class Plugin : JavaPlugin() {
     }
 
     fun reload() {
-        config?.let { config ->
+        config = Configuration(this).also { config ->
             if (!config.isEnabled) return
             logger.info(C.INFO.reloading)
-            this.config = Configuration(this)
             eventHandler?.let { HandlerList.unregisterAll(it) }
             tgBot?.run { stop() }
             tgBot = TgBot(this, config).also { bot ->

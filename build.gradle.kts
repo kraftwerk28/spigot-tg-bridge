@@ -1,4 +1,5 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.yaml.snakeyaml.Yaml
 import java.io.File
 import java.io.FileInputStream
@@ -26,7 +27,7 @@ val cfg: Map<String, String> = Yaml()
     .load(FileInputStream("$projectDir/src/main/resources/plugin.yml"))
 val pluginVersion = cfg.get("version")
 val spigotApiVersion = cfg.get("api-version")
-val exposedVersion = "0.31.1"
+val retrofitVersion = "2.7.1"
 version = pluginVersion as Any
 
 repositories {
@@ -37,10 +38,6 @@ repositories {
     maven(url = "https://jitpack.io")
     maven(url = "https://oss.sonatype.org/content/repositories/snapshots/")
 }
-
-val retrofitVersion = "2.7.1"
-val plugDir = "MinecraftServers/spigot_1.17/plugins/"
-val homeDir = System.getProperty("user.home")
 
 dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
@@ -62,12 +59,21 @@ tasks {
         )
     }
     register<Copy>("copyArtifacts") {
-        from("shadowJar")
-        into(File(homeDir, plugDir))
+        val dest = File(
+            System.getProperty("user.home"),
+            "MinecraftServers/spigot_1.17/plugins/",
+        )
+        from(shadowJar)
+        into(dest)
     }
     register("pack") {
         description = "[For development only!] Build project and copy .jar into servers directory"
         dependsOn("shadowJar")
         finalizedBy("copyArtifacts")
+    }
+    withType<KotlinCompile> {
+        kotlinOptions {
+            jvmTarget = "1.8"
+        }
     }
 }

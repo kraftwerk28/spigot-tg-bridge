@@ -4,7 +4,9 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
@@ -93,20 +95,15 @@ class TgBot(
                 }
             }
         }
+        updateChan.close()
     }
 
     private fun initHandler() = scope.launch {
-        loop@ while (true) {
+        updateChan.consumeEach {
             try {
-                handleUpdate(updateChan.receive())
+                handleUpdate(it)
             } catch (e: Exception) {
-                when (e) {
-                    is CancellationException -> break@loop
-                    else -> {
-                        e.printStackTrace()
-                        continue@loop
-                    }
-                }
+                e.printStackTrace()
             }
         }
     }
@@ -117,7 +114,8 @@ class TgBot(
             return
         update.message?.text?.let {
             commandRegex.matchEntire(it)?.groupValues?.let {
-                commandMap[it[1]]?.let { it(update) }
+                val (command) = it
+                commandMap.get(command)?.let { it(update) }
             } ?: run {
                 onTextHandler(update)
             }
@@ -127,7 +125,7 @@ class TgBot(
     fun stop() {
         runBlocking {
             pollJob.cancelAndJoin()
-            handlerJob.cancelAndJoin()
+            handlerJob.join()
         }
     }
 
