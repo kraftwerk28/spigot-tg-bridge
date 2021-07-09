@@ -7,9 +7,9 @@ serverStopMessage: "Server stopped."
 logJoinLeave: true
 logFromMCtoTG: true
 logFromTGtoMC: true
-logPlayerDeath: false
+logPlayerDeath: true
 logPlayerAsleep: false
-minecraftFormat: "<%username%>: %message%"
+minecraftFormat: "§6§l%username%§r (from §o%chat%§r): §b%message%§r"
 telegramFormat: "<i>%username%</i>: %message%"
 strings:
   online: "<b>Online</b>"
@@ -17,6 +17,6 @@ strings:
   joined: "<i>%username%</i> joined."
   left: "<i>%username%</i> left."
 commands:
-  time: 'time'
-  online: 'online'
-  chat_id: 'chat_id'
+  time: "time"
+  online: "online"
+  chat_id: "chat_id"
