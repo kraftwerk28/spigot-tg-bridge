@@ -82,6 +82,7 @@ class Plugin : AsyncJavaPlugin() {
             eventHandler?.let { HandlerList.unregisterAll(it) }
             tgBot?.run { stop() }
             tgBot = TgBot(this, config).also { bot ->
+                bot.startPolling()
                 eventHandler = EventHandler(this, config, bot).also {
                     server.pluginManager.registerEvents(it, this)
                 }
