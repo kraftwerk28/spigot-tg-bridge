@@ -1,44 +1,53 @@
 package org.kraftwerk28.spigot_tg_bridge
 
 import org.bukkit.event.HandlerList
-import org.bukkit.plugin.java.JavaPlugin
 import java.lang.Exception
 import org.kraftwerk28.spigot_tg_bridge.Constants as C
 
-class Plugin : JavaPlugin() {
+class Plugin : AsyncJavaPlugin() {
     var tgBot: TgBot? = null
-    var eventHandler: EventHandler? = null
+    private var eventHandler: EventHandler? = null
     var config: Configuration? = null
+    var ignAuth: IgnAuth? = null
 
-    override fun onEnable() {
-        try {
-            config = Configuration(this)
-        } catch (e: Exception) {
-            logger.warning(e.message)
-            return
-        }
-
-        config?.let { config ->
+    override suspend fun onEnableAsync() = try {
+        config = Configuration(this).also { config ->
             if (!config.isEnabled) return
-            val cmdHandler = CommandHandler(this)
+
+            if (config.enableIgnAuth) {
+                val dbFilePath = dataFolder.resolve("spigot-tg-bridge.sqlite")
+                ignAuth = IgnAuth(
+                    fileName = dbFilePath.absolutePath,
+                    plugin = this,
+                )
+            }
+
             tgBot?.run { stop() }
             tgBot = TgBot(this, config).also { bot ->
-                eventHandler = EventHandler(bot, config).also {
+                bot.startPolling()
+                eventHandler = EventHandler(this, config, bot).also {
                     server.pluginManager.registerEvents(it, this)
                 }
             }
-            getCommand(C.COMMANDS.PLUGIN_RELOAD)?.setExecutor(cmdHandler)
-            config.serverStartMessage?.let { message ->
-                tgBot?.sendMessageToTelegram(message)
+
+            getCommand(C.COMMANDS.PLUGIN_RELOAD)?.run {
+                setExecutor(CommandHandler(this@Plugin))
+            }
+            config.serverStartMessage?.let {
+                tgBot?.sendMessageToTelegram(it)
             }
         }
+    } catch (e: Exception) {
+        // Configuration file is missing or incomplete
+        logger.warning(e.message)
     }
 
-    override fun onDisable() {
-        config?.let { config ->
-            if (!config.isEnabled) return
+    override suspend fun onDisableAsync() {
+        config?.let fn@{ config ->
+            if (!config.isEnabled)
+                return@fn
             config.serverStopMessage?.let {
-                tgBot?.sendMessageToTelegram(it, blocking = true)
+                tgBot?.sendMessageToTelegram(it)
             }
             eventHandler?.let { HandlerList.unregisterAll(it) }
             tgBot?.run { stop() }
@@ -66,14 +75,14 @@ class Plugin : JavaPlugin() {
             .also { server.broadcastMessage(it) }
     }
 
-    fun reload() {
+    suspend fun reload() {
         config = Configuration(this).also { config ->
             if (!config.isEnabled) return
             logger.info(C.INFO.reloading)
             eventHandler?.let { HandlerList.unregisterAll(it) }
             tgBot?.run { stop() }
             tgBot = TgBot(this, config).also { bot ->
-                eventHandler = EventHandler(bot, config).also {
+                eventHandler = EventHandler(this, config, bot).also {
                     server.pluginManager.registerEvents(it, this)
                 }
             }

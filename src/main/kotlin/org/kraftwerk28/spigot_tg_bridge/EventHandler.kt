@@ -9,15 +9,16 @@ import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerQuitEvent
 
 class EventHandler(
+    private val plugin: Plugin,
+    private val config: Configuration,
     private val tgBot: TgBot,
-    private val config: Configuration
 ) : Listener {
 
     @EventHandler
     fun onPlayerChat(event: AsyncPlayerChatEvent) {
         if (!config.logFromMCtoTG) return
         event.run {
-            tgBot.sendMessageToTelegram(message, player.displayName)
+            sendMessage(message, player.displayName)
         }
     }
 
@@ -26,7 +27,7 @@ class EventHandler(
         if (!config.logJoinLeave) return
         val username = event.player.displayName.fullEscape()
         val text = config.joinString.replace("%username%", username)
-        tgBot.sendMessageToTelegram(text)
+        sendMessage(text)
     }
 
     @EventHandler
@@ -34,7 +35,7 @@ class EventHandler(
         if (!config.logJoinLeave) return
         val username = event.player.displayName.fullEscape()
         val text = config.leaveString.replace("%username%", username)
-        tgBot.sendMessageToTelegram(text)
+        sendMessage(text)
     }
 
     @EventHandler
@@ -43,7 +44,7 @@ class EventHandler(
         event.deathMessage?.let {
             val username = event.entity.displayName.fullEscape()
             val text = it.replace(username, "<i>$username</i>")
-            tgBot.sendMessageToTelegram(text)
+            sendMessage(text)
         }
     }
 
@@ -53,6 +54,12 @@ class EventHandler(
         if (event.bedEnterResult != PlayerBedEnterEvent.BedEnterResult.OK)
             return
         val text = "<i>${event.player.displayName}</i> fell asleep."
-        tgBot.sendMessageToTelegram(text)
+        sendMessage(text)
+    }
+
+    private fun sendMessage(text: String, username: String? = null) {
+        plugin.launch {
+            tgBot.sendMessageToTelegram(text, username)
+        }
     }
 }
