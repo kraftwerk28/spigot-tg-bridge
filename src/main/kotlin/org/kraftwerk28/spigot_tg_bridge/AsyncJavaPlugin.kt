@@ -5,6 +5,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
 import org.bukkit.plugin.java.JavaPlugin
 
 open class AsyncJavaPlugin : JavaPlugin() {
@@ -17,7 +19,7 @@ open class AsyncJavaPlugin : JavaPlugin() {
     override fun onDisable() {
         runBlocking {
             onDisableAsync()
-            scope.cancel()
+            scope.coroutineContext[Job]?.cancelAndJoin()
         }
     }
 
