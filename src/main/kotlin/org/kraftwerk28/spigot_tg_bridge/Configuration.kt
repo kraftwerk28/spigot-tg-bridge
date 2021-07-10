@@ -17,6 +17,7 @@ class Configuration(plugin: Plugin) {
     val logPlayerAsleep: Boolean
     val onlineString: String
     val nobodyOnlineString: String
+    val enableIgnAuth: Boolean
 
     // Telegram bot stuff
     val botToken: String
@@ -24,6 +25,7 @@ class Configuration(plugin: Plugin) {
     val logFromTGtoMC: Boolean
     val allowWebhook: Boolean
     val webhookConfig: Map<String, Any>?
+    val pollTimeout: Int
 
     var commands: BotCommands
 
@@ -78,10 +80,14 @@ class Configuration(plugin: Plugin) {
             )!!
             // isEnabled = getBoolean("enable", true)
             allowedChats = getLongList("chats")
+            enableIgnAuth = getBoolean("enableIgnAuth", false)
+
             botToken = getString("botToken") ?: throw Exception(C.WARN.noToken)
             allowWebhook = getBoolean("useWebhook", false)
             @Suppress("unchecked_cast")
             webhookConfig = get("webhookConfig") as Map<String, Any>?
+            pollTimeout = getInt("pollTimeout", 30)
+
             logJoinLeave = getBoolean("logJoinLeave", false)
             onlineString = getString("strings.online", "Online")!!
             nobodyOnlineString = getString(

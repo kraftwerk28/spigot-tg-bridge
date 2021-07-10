@@ -8,7 +8,7 @@ object Constants {
         const val noUsername = "Bot username must be defined."
     }
     object INFO {
-        const val reloading = "Reloading plugin... This may take some time."
+        const val reloading = "Reloading..."
         const val reloadComplete = "Reload completed."
     }
     object TIMES_OF_DAY {

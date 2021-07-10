@@ -1,14 +1,11 @@
 package org.kraftwerk28.spigot_tg_bridge
 
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import retrofit2.Call
 import retrofit2.Retrofit
@@ -16,27 +13,36 @@ import retrofit2.converter.gson.GsonConverterFactory
 import java.time.Duration
 import org.kraftwerk28.spigot_tg_bridge.Constants as C
 
-typealias UpdateRequest = Call<TgApiService.TgResponse<List<TgApiService.Update>>>?
+typealias UpdateRequest = Call<TgResponse<List<Update>>>?
+typealias CmdHandler = suspend (HandlerContext) -> Unit
+
+data class HandlerContext(
+    val update: Update,
+    val message: Message?,
+    val chat: Chat?,
+    val commandArgs: List<String>,
+)
 
 class TgBot(
     private val plugin: Plugin,
     private val config: Configuration,
-    private val pollTimeout: Int = 30,
 ) {
     private val api: TgApiService
     private val client: OkHttpClient
-    private val updateChan = Channel<TgApiService.Update>()
-    private val scope = CoroutineScope(Dispatchers.Default)
-    private val pollJob: Job
-    private val handlerJob: Job
+    private val updateChan = Channel<Update>()
+    private var pollJob: Job? = null
+    private var handlerJob: Job? = null
     private var currentOffset: Long = -1
-    private var me: TgApiService.User
-    private var commandRegex: Regex
-    private val commandMap = config.commands.run {
+    private var me: User? = null
+    private var commandRegex: Regex? = null
+    private val commandMap: Map<String?, CmdHandler> = config.commands.run {
         mapOf(
             online to ::onlineHandler,
             time to ::timeHandler,
             chatID to ::chatIdHandler,
+            // TODO:
+            // linkIgn to ::linkIgnHandler,
+            // getAllLinked to ::getLinkedUsersHandler,
         )
     }
 
@@ -45,46 +51,54 @@ class TgBot(
             .Builder()
             .readTimeout(Duration.ZERO)
             .build()
-
         api = Retrofit.Builder()
             .baseUrl("https://api.telegram.org/bot${config.botToken}/")
             .client(client)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(TgApiService::class.java)
+    }
 
-        runBlocking {
-            me = api.getMe().result!!
-            // I intentionally don't put optional @username in regex
-            // since bot is only used in group chats
-            commandRegex = """^\/(\w+)(?:@${me.username})$""".toRegex()
-            val commands = config.commands.run { listOf(time, online, chatID) }
-                .zip(
-                    C.COMMAND_DESC.run {
-                        listOf(timeDesc, onlineDesc, chatIDDesc)
-                    }
-                )
-                .map { TgApiService.BotCommand(it.first!!, it.second) }
-                .let { TgApiService.SetMyCommands(it) }
+    private suspend fun initialize() {
+        me = api.getMe().result!!
+        // I intentionally don't put optional @username in regex
+        // since bot is only used in group chats
+        commandRegex = """^\/(\w+)(?:@${me!!.username})(?:\s+(.+))?$""".toRegex()
+        val commands = config.commands.run { listOf(time, online, chatID) }
+            .zip(
+                C.COMMAND_DESC.run {
+                    listOf(timeDesc, onlineDesc, chatIDDesc)
+                }
+            )
+            .map { BotCommand(it.first!!, it.second) }
+            .let { SetMyCommands(it) }
+        api.deleteWebhook(dropPendingUpdates = true)
+        api.setMyCommands(commands)
+    }
 
-            api.deleteWebhook(true)
-            api.setMyCommands(commands)
-        }
-
+    suspend fun startPolling() {
+        initialize()
         pollJob = initPolling()
         handlerJob = initHandler()
     }
 
-    private fun initPolling() = scope.launch {
+    suspend fun stop() {
+        pollJob?.cancelAndJoin()
+        handlerJob?.join()
+    }
+
+    private fun initPolling() = plugin.launch {
         loop@ while (true) {
             try {
-                api.getUpdates(offset = currentOffset, timeout = pollTimeout)
-                    .result?.let { updates ->
-                        if (!updates.isEmpty()) {
-                            updates.forEach { updateChan.send(it) }
-                            currentOffset = updates.last().updateId + 1
-                        }
+                api.getUpdates(
+                    offset = currentOffset,
+                    timeout = config.pollTimeout,
+                ).result?.let { updates ->
+                    if (!updates.isEmpty()) {
+                        updates.forEach { updateChan.send(it) }
+                        currentOffset = updates.last().updateId + 1
                     }
+                }
             } catch (e: Exception) {
                 when (e) {
                     is CancellationException -> break@loop
@@ -98,7 +112,7 @@ class TgBot(
         updateChan.close()
     }
 
-    private fun initHandler() = scope.launch {
+    private fun initHandler() = plugin.launch {
         updateChan.consumeEach {
             try {
                 handleUpdate(it)
@@ -108,29 +122,30 @@ class TgBot(
         }
     }
 
-    suspend fun handleUpdate(update: TgApiService.Update) {
+    suspend fun handleUpdate(update: Update) {
         // Ignore PM or channel
         if (listOf("private", "channel").contains(update.message?.chat?.type))
             return
+        var ctx = HandlerContext(
+            update,
+            update.message,
+            update.message?.chat,
+            listOf(),
+        )
         update.message?.text?.let {
-            commandRegex.matchEntire(it)?.groupValues?.let {
-                val (command) = it
-                commandMap.get(command)?.let { it(update) }
+            commandRegex?.matchEntire(it)?.groupValues?.let {
+                commandMap.get(it[1])?.run {
+                    val args = it[2].split("\\s+".toRegex())
+                    this(ctx.copy(commandArgs = args))
+                }
             } ?: run {
-                onTextHandler(update)
+                onTextHandler(ctx)
             }
         }
     }
 
-    fun stop() {
-        runBlocking {
-            pollJob.cancelAndJoin()
-            handlerJob.join()
-        }
-    }
-
-    private suspend fun timeHandler(update: TgApiService.Update) {
-        val msg = update.message!!
+    private suspend fun timeHandler(ctx: HandlerContext) {
+        val msg = ctx.message!!
         if (!config.allowedChats.contains(msg.chat.id)) {
             return
         }
@@ -156,8 +171,8 @@ class TgBot(
         api.sendMessage(msg.chat.id, text, replyToMessageId = msg.messageId)
     }
 
-    private suspend fun onlineHandler(update: TgApiService.Update) {
-        val msg = update.message!!
+    private suspend fun onlineHandler(ctx: HandlerContext) {
+        val msg = ctx.message!!
         if (!config.allowedChats.contains(msg.chat.id)) {
             return
         }
@@ -172,8 +187,8 @@ class TgBot(
         api.sendMessage(msg.chat.id, text, replyToMessageId = msg.messageId)
     }
 
-    private suspend fun chatIdHandler(update: TgApiService.Update) {
-        val msg = update.message!!
+    private suspend fun chatIdHandler(ctx: HandlerContext) {
+        val msg = ctx.message!!
         val chatId = msg.chat.id
         val text = """
         |Chat ID: <code>$chatId</code>.
@@ -186,8 +201,45 @@ class TgBot(
         api.sendMessage(chatId, text, replyToMessageId = msg.messageId)
     }
 
-    private suspend fun onTextHandler(update: TgApiService.Update) {
-        val msg = update.message!!
+    private suspend fun linkIgnHandler(ctx: HandlerContext) {
+        val tgUser = ctx.message!!.from!!
+        val mcUuid = getMinecraftUuidByUsername(ctx.message.text!!)
+        if (mcUuid == null || ctx.commandArgs.size < 1) {
+            // Respond...
+            return
+        }
+        val (minecraftIgn) = ctx.commandArgs
+        val linked = plugin.ignAuth?.linkUser(
+            tgId = tgUser.id,
+            tgFirstName = tgUser.firstName,
+            tgLastName = tgUser.lastName,
+            minecraftUsername = minecraftIgn,
+            minecraftUuid = mcUuid,
+        ) ?: false
+        if (linked) {
+            // TODO
+        }
+    }
+
+    private suspend fun getLinkedUsersHandler(ctx: HandlerContext) {
+        val linkedUsers = plugin.ignAuth?.run {
+            getAllLinkedUsers()
+        } ?: listOf()
+        if (linkedUsers.isEmpty()) {
+            api.sendMessage(ctx.message!!.chat.id, "No linked users.")
+        } else {
+            val text = "<b>Linked users:</b>\n" +
+                linkedUsers.mapIndexed { i, dbUser ->
+                    "${i + 1}. ${dbUser.fullName()}"
+                }.joinToString("\n")
+            api.sendMessage(ctx.message!!.chat.id, text)
+        }
+    }
+
+    private suspend fun onTextHandler(
+        @Suppress("unused_parameter") ctx: HandlerContext
+    ) {
+        val msg = ctx.message!!
         if (!config.logFromTGtoMC || msg.from == null)
             return
         plugin.sendMessageToMinecraft(
@@ -197,22 +249,19 @@ class TgBot(
         )
     }
 
-    fun sendMessageToTelegram(
-        text: String,
-        username: String? = null,
-        blocking: Boolean = false,
-    ) {
+    suspend fun sendMessageToTelegram(text: String, username: String? = null) {
         val formatted = username?.let {
             config.telegramFormat
                 .replace(C.USERNAME_PLACEHOLDER, username.fullEscape())
                 .replace(C.MESSAGE_TEXT_PLACEHOLDER, text.escapeHtml())
         } ?: text
-        scope.launch {
-            config.allowedChats.forEach { chatId ->
-                api.sendMessage(chatId, formatted)
-            }
-        }.also {
-            if (blocking) runBlocking { it.join() }
+        config.allowedChats.forEach { chatId ->
+            api.sendMessage(chatId, formatted)
         }
+        // plugin.launch {
+        //     config.allowedChats.forEach { chatId ->
+        //         api.sendMessage(chatId, formatted)
+        //     }
+        // }
     }
 }

@@ -16,7 +16,7 @@ class CommandHandler(private val plugin: Plugin) : CommandExecutor {
         if (sender !is ConsoleCommandSender) return false
         return when (label) {
             C.COMMANDS.PLUGIN_RELOAD -> {
-                plugin.reload()
+                plugin.launch { plugin.reload() }
                 true
             }
             else -> false
