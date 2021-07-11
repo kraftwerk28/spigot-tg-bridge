@@ -18,8 +18,8 @@ create table if not exists user (
 
 class IgnAuth(
     fileName: String,
-    val plugin: Plugin,
-    var conn: Connection? = null,
+    private val plugin: Plugin,
+    private var conn: Connection? = null,
 ) {
     init {
         plugin.launch {
@@ -27,7 +27,7 @@ class IgnAuth(
         }
     }
 
-    suspend fun initializeConnection(fileName: String) = try {
+    private fun initializeConnection(fileName: String) = try {
         DriverManager.getConnection("jdbc:sqlite:$fileName").apply {
             createStatement().execute(INIT_DB_QUERY)
         }.also {
@@ -37,11 +37,11 @@ class IgnAuth(
         plugin.logger.info(e.message)
     }
 
-    suspend fun close() = conn?.run {
+    fun close() = conn?.run {
         close()
     }
 
-    suspend fun linkUser(
+    fun linkUser(
         tgId: Long,
         tgUsername: String? = null,
         tgFirstName: String,
@@ -70,21 +70,21 @@ class IgnAuth(
         execute()
     } ?: false
 
-    suspend fun getLinkedUserByIgn(ign: String) =
+    fun getLinkedUserByIgn(ign: String) =
         conn?.stmt("select * from user where mc_uuid = ?", ign)?.first {
             toLinkedUser()
         }
 
-    suspend fun getLinkedUserByTgId(id: Long) =
+    fun getLinkedUserByTgId(id: Long) =
         conn?.stmt("select * from user where tg_id = ?", id)?.first {
             toLinkedUser()
         }
 
-    suspend fun unlinkUserByTgId(id: Long) =
+    fun unlinkUserByTgId(id: Long) =
         conn?.stmt("delete from user where tg_id = ?", id)?.run {
             executeUpdate() > 0
         }
 
-    suspend fun getAllLinkedUsers() =
+    fun getAllLinkedUsers() =
         conn?.stmt("select * from user")?.map { toLinkedUser() }
 }

@@ -37,7 +37,7 @@ class Configuration(plugin: Plugin) {
             // plugin.saveResource(C.configFilename, false);
             throw Exception(C.WARN.noConfigWarning)
         }
-        val pluginConfig = plugin.getConfig()
+        val pluginConfig = plugin.config
         pluginConfig.load(cfgFile)
 
         pluginConfig.getString("minecraftMessageFormat")?.let {

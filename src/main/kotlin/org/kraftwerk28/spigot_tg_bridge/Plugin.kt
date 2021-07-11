@@ -1,45 +1,55 @@
 package org.kraftwerk28.spigot_tg_bridge
 
+import kotlinx.coroutines.delay
 import org.bukkit.event.HandlerList
 import java.lang.Exception
+import kotlin.system.measureTimeMillis
 import org.kraftwerk28.spigot_tg_bridge.Constants as C
 
 class Plugin : AsyncJavaPlugin() {
-    var tgBot: TgBot? = null
+    private var tgBot: TgBot? = null
     private var eventHandler: EventHandler? = null
-    var config: Configuration? = null
+    private var config: Configuration? = null
     var ignAuth: IgnAuth? = null
 
-    override suspend fun onEnableAsync() = try {
-        config = Configuration(this).also { config ->
-            if (!config.isEnabled) return
-
-            if (config.enableIgnAuth) {
-                val dbFilePath = dataFolder.resolve("spigot-tg-bridge.sqlite")
-                ignAuth = IgnAuth(
-                    fileName = dbFilePath.absolutePath,
-                    plugin = this,
-                )
-            }
-
-            tgBot?.run { stop() }
-            tgBot = TgBot(this, config).also { bot ->
-                bot.startPolling()
-                eventHandler = EventHandler(this, config, bot).also {
-                    server.pluginManager.registerEvents(it, this)
+    override suspend fun onEnableAsync() {
+        try {
+            launch {
+                config = Configuration(this).also {
+                    initializeWithConfig(it)
                 }
             }
+        } catch (e: Exception) {
+            // Configuration file is missing or incomplete
+            logger.warning(e.message)
+        }
+    }
 
-            getCommand(C.COMMANDS.PLUGIN_RELOAD)?.run {
-                setExecutor(CommandHandler(this@Plugin))
-            }
-            config.serverStartMessage?.let {
-                tgBot?.sendMessageToTelegram(it)
+    private suspend fun initializeWithConfig(config: Configuration) {
+        if (!config.isEnabled) return
+
+        if (config.enableIgnAuth) {
+            val dbFilePath = dataFolder.resolve("spigot-tg-bridge.sqlite")
+            ignAuth = IgnAuth(
+                fileName = dbFilePath.absolutePath,
+                plugin = this,
+            )
+        }
+
+        tgBot?.run { stop() }
+        tgBot = TgBot(this, config).also { bot ->
+            bot.startPolling()
+            eventHandler = EventHandler(this, config, bot).also {
+                server.pluginManager.registerEvents(it, this)
             }
         }
-    } catch (e: Exception) {
-        // Configuration file is missing or incomplete
-        logger.warning(e.message)
+
+        getCommand(C.COMMANDS.PLUGIN_RELOAD)?.run {
+            setExecutor(CommandHandler(this@Plugin))
+        }
+        config.serverStartMessage?.let {
+            tgBot?.sendMessageToTelegram(it)
+        }
     }
 
     override suspend fun onDisableAsync() {
@@ -52,6 +62,7 @@ class Plugin : AsyncJavaPlugin() {
             eventHandler?.let { HandlerList.unregisterAll(it) }
             tgBot?.run { stop() }
             tgBot = null
+            ignAuth?.close()
         }
     }
 
