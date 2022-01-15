@@ -17,6 +17,7 @@ class EventHandler(
     @EventHandler
     fun onPlayerChat(event: AsyncPlayerChatEvent) {
         if (!config.logFromMCtoTG) return
+        if (event.isCancelled()) return;
         event.run {
             sendMessage(message, player.displayName)
         }
