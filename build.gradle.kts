@@ -12,11 +12,12 @@ buildscript {
     dependencies {
         classpath("org.yaml:snakeyaml:1.26")
         classpath("org.jlleitschuh.gradle:ktlint-gradle:10.1.0")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.5.30")
     }
 }
 
 plugins {
-    id("org.jetbrains.kotlin.jvm") version "1.4.31"
+    id("org.jetbrains.kotlin.jvm") version "1.5.30"
     id("com.github.johnrengelman.shadow") version "5.2.0"
     id("org.jlleitschuh.gradle.ktlint") version "10.1.0"
 }
