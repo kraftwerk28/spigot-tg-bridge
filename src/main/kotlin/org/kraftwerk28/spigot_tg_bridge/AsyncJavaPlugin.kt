@@ -22,9 +22,15 @@ open class AsyncJavaPlugin : JavaPlugin() {
         }
     }
 
+    override fun onLoad() {
+        runBlocking { onLoadAsync() }
+    }
+
     open suspend fun onEnableAsync() = Unit
 
     open suspend fun onDisableAsync() = Unit
+
+    open suspend fun onLoadAsync() = Unit
 
     fun <T> launch(f: suspend () -> T) = scope.launch { f() }
 }

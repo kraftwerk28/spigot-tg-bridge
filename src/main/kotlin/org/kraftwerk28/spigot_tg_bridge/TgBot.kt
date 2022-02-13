@@ -24,6 +24,8 @@ class TgBot(
     private val plugin: Plugin,
     private val config: Configuration,
 ) {
+    private val poller: Poller
+
     private val client: OkHttpClient = OkHttpClient
         .Builder()
         .readTimeout(Duration.ZERO)
@@ -34,12 +36,14 @@ class TgBot(
         .addConverterFactory(GsonConverterFactory.create())
         .build()
         .create(TgApiService::class.java)
+
     private val updateChan = Channel<Update>()
     private var pollJob: Job? = null
     private var handlerJob: Job? = null
     private var currentOffset: Long = -1
     private var me: User? = null
     private var commandRegex: Regex? = null
+
     private val commandMap: Map<String?, CmdHandler> = config.commands.run {
         mapOf(
             online to ::onlineHandler,

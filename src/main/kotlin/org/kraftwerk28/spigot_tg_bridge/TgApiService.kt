@@ -8,7 +8,13 @@ import retrofit2.http.Query
 interface TgApiService {
     @GET("deleteWebhook")
     suspend fun deleteWebhook(
-        @Query("drop_pending_updates") dropPendingUpdates: Boolean
+        @Query("drop_pending_updates") dropPendingUpdates: Boolean = false,
+    ): TgResponse<Boolean>
+
+    @GET("setWebhook")
+    suspend fun setWebhook(
+        @Query("url") url: String,
+        @Query("drop_pending_updates") dropPendingUpdates: Boolean = false,
     ): TgResponse<Boolean>
 
     @GET("sendMessage?parse_mode=HTML")
