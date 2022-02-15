@@ -54,9 +54,9 @@
 |        commands        | Dictionary of command text used in Telegram bot                                                  | `Map<string, string>`  | :heavy_check_mark: |        See below         |
 | telegramMessageFormat  | Format string for TGtoMC chat message                                                            |        `string`        | :x: |    See default config    |
 | minecraftMessageFormat | Format string for MCtoTG chat message                                                            |        `string`        | :x: |    See default config    |
-|     silentMessages     | Disable notification in Telegram chats                                                           |       `boolean`        | :x: |    See default config    |
+|     silentMessages     | Disable notification in Telegram chats                                                           |       `boolean`        | :x: |    false                 |
 |       apiOrigin        | Use different API endpoint for the bot                                                           |        `string`        | :x: | https://api.telegram.org |
-|   disableConfigWatch   | Do not watch the config for changes                                                              |        `string`        | :x: | https://api.telegram.org |
+|   disableConfigWatch   | Do not watch the config for changes                                                              |        `string`        | :x: | false                    |
 
 
 ## Telegram bot commands:
