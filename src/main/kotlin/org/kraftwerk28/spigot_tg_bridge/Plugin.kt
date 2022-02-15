@@ -1,9 +1,7 @@
 package org.kraftwerk28.spigot_tg_bridge
 
-import kotlinx.coroutines.delay
 import org.bukkit.event.HandlerList
 import java.lang.Exception
-import kotlin.system.measureTimeMillis
 import org.kraftwerk28.spigot_tg_bridge.Constants as C
 
 class Plugin : AsyncJavaPlugin() {

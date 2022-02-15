@@ -31,7 +31,7 @@ fun User.rawUserMention(): String =
 
 fun DbLinkedUser.fullName() = tgFirstName + (tgLastName?.let { " $it" } ?: "")
 
-fun Connection.stmt(query: String, vararg args: Any?) =
+fun Connection.stmt(query: String, vararg args: Any?): PreparedStatement =
     prepareStatement(query).apply {
         args.zip(1..args.size).forEach { (arg, i) ->
             when (arg) {
@@ -42,7 +42,7 @@ fun Connection.stmt(query: String, vararg args: Any?) =
         }
     }
 
-suspend fun checkMinecraftLicense(playerUuid: String): Boolean = try {
+fun checkMinecraftLicense(playerUuid: String): Boolean = try {
     val urlString = "https://api.mojang.com/user/profiles/$playerUuid/names"
     val conn = (URL(urlString).openConnection() as HttpURLConnection).apply {
         requestMethod = "GET"
@@ -53,7 +53,7 @@ suspend fun checkMinecraftLicense(playerUuid: String): Boolean = try {
     false
 }
 
-suspend fun getMinecraftUuidByUsername(username: String): String? = try {
+fun getMinecraftUuidByUsername(username: String): String? = try {
     val urlString = "https://api.mojang.com/users/profiles/minecraft/$username"
     val conn = (URL(urlString).openConnection() as HttpURLConnection).apply {
         requestMethod = "GET"

@@ -1,7 +1,6 @@
 enable: true
 botToken: abcdef123456789
-chats:
-  - -1234567890123
+chats: []
 serverStartMessage: "Server started."
 serverStopMessage: "Server stopped."
 logJoinLeave: true
@@ -11,6 +10,7 @@ logPlayerDeath: true
 logPlayerAsleep: false
 minecraftFormat: "§6§l%username%§r (from §o%chat%§r): §b%message%§r"
 telegramFormat: "<i>%username%</i>: %message%"
+silentMessages: false
 strings:
   online: "<b>Online</b>"
   nobodyOnline: "<b>Nobody online...</b>"

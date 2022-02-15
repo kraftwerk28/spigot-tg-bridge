@@ -16,6 +16,7 @@ interface TgApiService {
         @Query("chat_id") chatId: Long,
         @Query("text") text: String,
         @Query("reply_to_message_id") replyToMessageId: Long? = null,
+        @Query("disable_notification") disableNotification: Boolean? = null,
     ): TgResponse<Message>
 
     @GET("getUpdates")

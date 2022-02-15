@@ -16,7 +16,7 @@ buildscript {
 }
 
 plugins {
-    id("org.jetbrains.kotlin.jvm") version "1.4.31"
+    id("org.jetbrains.kotlin.jvm") version "1.6.10"
     id("com.github.johnrengelman.shadow") version "5.2.0"
     id("org.jlleitschuh.gradle.ktlint") version "10.1.0"
 }
@@ -60,8 +60,8 @@ tasks {
     }
     register<Copy>("copyArtifacts") {
         val dest = File(
-            System.getProperty("user.home"),
-            "MinecraftServers/spigot_1.17/plugins/",
+            System.getenv("HOME"),
+            "projects/minecraft/spigot/spigot-1.18.1/plugins",
         )
         from(shadowJar)
         into(dest)

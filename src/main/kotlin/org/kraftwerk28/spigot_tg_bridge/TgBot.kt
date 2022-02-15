@@ -6,6 +6,7 @@ import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.consumeEach
 import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.time.Duration
@@ -26,10 +27,18 @@ class TgBot(
 ) {
     private val client: OkHttpClient = OkHttpClient
         .Builder()
+        // Disable timeout to make long-polling possible
         .readTimeout(Duration.ZERO)
+        .addInterceptor(
+            HttpLoggingInterceptor().apply {
+                level =
+                    if (config.debugHttp) HttpLoggingInterceptor.Level.BODY
+                    else HttpLoggingInterceptor.Level.NONE
+            }
+        )
         .build()
     private val api = Retrofit.Builder()
-        .baseUrl("https://api.telegram.org/bot${config.botToken}/")
+        .baseUrl("${config.apiOrigin}/bot${config.botToken}/")
         .client(client)
         .addConverterFactory(GsonConverterFactory.create())
         .build()
@@ -183,11 +192,13 @@ class TgBot(
         val chatId = msg.chat.id
         val text = """
         |Chat ID: <code>$chatId</code>.
-        |Copy this id to <code>chats</code> section in your <b>config.yml</b> file so it will look like this:
-        |
-        |<pre>chats:
-        |  # other ids...
-        |  - $chatId</pre>
+        |Copy this id to <code>chats</code> section in your <b>config.yml</b> file so it looks like this:
+        |<pre>
+        |chats: [
+        |  $chatId,
+        |  # other chat ids...
+        |]
+        |</pre>
         """.trimMargin()
         api.sendMessage(chatId, text, replyToMessageId = msg.messageId)
     }
@@ -247,7 +258,11 @@ class TgBot(
                 .replace(C.MESSAGE_TEXT_PLACEHOLDER, text.escapeHtml())
         } ?: text
         config.allowedChats.forEach { chatId ->
-            api.sendMessage(chatId, formatted)
+            try {
+                api.sendMessage(chatId, formatted, disableNotification = config.silentMessages)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
     }
 }
