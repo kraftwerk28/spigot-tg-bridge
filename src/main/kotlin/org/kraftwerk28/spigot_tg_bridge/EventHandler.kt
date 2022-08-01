@@ -16,7 +16,7 @@ class EventHandler(
 
     @EventHandler
     fun onPlayerChat(event: AsyncPlayerChatEvent) {
-        if (!config.logFromMCtoTG) return
+        if (!config.logFromMCtoTG || event.isCancelled) return
         event.run {
             sendMessage(message, player.displayName)
         }
@@ -57,9 +57,7 @@ class EventHandler(
         sendMessage(text)
     }
 
-    private fun sendMessage(text: String, username: String? = null) {
-        plugin.launch {
-            tgBot.sendMessageToTelegram(text, username)
-        }
+    private fun sendMessage(text: String, username: String? = null) = plugin.launch {
+        tgBot.sendMessageToTelegram(text, username)
     }
 }
