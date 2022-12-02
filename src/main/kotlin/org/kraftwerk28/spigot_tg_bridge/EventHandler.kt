@@ -58,6 +58,7 @@ class EventHandler(
     }
 
     private fun sendMessage(text: String, username: String? = null) = plugin.launch {
-        tgBot.sendMessageToTelegram(text, username)
+        val textWithoutFormatting = text.replace(Regex("§."), "")
+        tgBot.sendMessageToTelegram(textWithoutFormatting, username)
     }
 }
