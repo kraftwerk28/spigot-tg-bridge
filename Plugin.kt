@@ -1,6 +1,5 @@
 package org.kraftwerk28.spigot_tg_bridge
 
-import kotlinx.coroutines.*
 import org.bukkit.event.HandlerList
 import java.lang.Exception
 import org.kraftwerk28.spigot_tg_bridge.Constants as C
@@ -11,10 +10,12 @@ class Plugin : AsyncJavaPlugin() {
     private var config: Configuration? = null
     var ignAuth: IgnAuth? = null
 
-    override suspend fun onEnableAsync(): Unit = coroutineScope {
+    override suspend fun onEnableAsync() {
         try {
-            config = Configuration(this@Plugin).also {
-                initializeWithConfig(it)
+            launch {
+                config = Configuration(this).also {
+                    initializeWithConfig(it)
+                }
             }
         } catch (e: Exception) {
             // Configuration file is missing or incomplete
@@ -25,17 +26,17 @@ class Plugin : AsyncJavaPlugin() {
     private suspend fun initializeWithConfig(config: Configuration) {
         if (!config.isEnabled) return
 
-//        if (config.enableIgnAuth) {
-//            val dbFilePath = dataFolder.resolve("spigot-tg-bridge.sqlite")
-//            ignAuth = IgnAuth(
-//                fileName = dbFilePath.absolutePath,
-//                plugin = this,
-//            )
-//        }
+        if (config.enableIgnAuth) {
+            val dbFilePath = dataFolder.resolve("spigot-tg-bridge.sqlite")
+            ignAuth = IgnAuth(
+                fileName = dbFilePath.absolutePath,
+                plugin = this,
+            )
+        }
 
-        tgBot?.stop()
+        tgBot?.run { stop() }
         tgBot = TgBot(this, config).also { bot ->
-            bot.start()
+            bot.startPolling()
             eventHandler = EventHandler(this, config, bot).also {
                 server.pluginManager.registerEvents(it, this)
             }
@@ -90,7 +91,7 @@ class Plugin : AsyncJavaPlugin() {
             eventHandler?.let { HandlerList.unregisterAll(it) }
             tgBot?.run { stop() }
             tgBot = TgBot(this, config).also { bot ->
-                bot.start()
+                bot.startPolling()
                 eventHandler = EventHandler(this, config, bot).also {
                     server.pluginManager.registerEvents(it, this)
                 }

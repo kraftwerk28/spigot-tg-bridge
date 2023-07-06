@@ -1,5 +1,6 @@
 package org.kraftwerk28.spigot_tg_bridge
 
+import kotlinx.coroutines.launch
 import java.sql.Connection
 import java.sql.DriverManager
 import java.sql.SQLException
@@ -49,23 +50,9 @@ class IgnAuth(
         minecraftUsername: String?,
         minecraftUuid: String,
     ): Boolean = conn?.stmt(
-        """
-        insert into user (
-            tg_id,
-            tg_username,
-            tg_first_name,
-            tg_last_name,
-            mc_uuid,
-            mc_username,
-        )
-        values (?, ?, ?, ?, ?, ?)
-        """,
-        tgId,
-        tgUsername,
-        tgFirstName,
-        tgLastName,
-        minecraftUuid,
-        minecraftUsername,
+        """ insert into user (tg_id, tg_username, tg_first_name, tg_last_name, mc_uuid, mc_username)
+            values (?, ?, ?, ?, ?, ?) """,
+        tgId, tgUsername, tgFirstName, tgLastName, minecraftUuid, minecraftUsername,
     )?.run {
         execute()
     } ?: false

@@ -9,8 +9,6 @@ data class TgResponse<T>(
     val description: String?,
 )
 
-data class WebhookOptions(val drop_pending_updates: Boolean)
-
 data class User(
     @Name("id") val id: Long,
     @Name("is_bot") val isBot: Boolean,

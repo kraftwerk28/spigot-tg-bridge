@@ -1,5 +1,6 @@
 package org.kraftwerk28.spigot_tg_bridge
 
+import kotlinx.coroutines.*
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender

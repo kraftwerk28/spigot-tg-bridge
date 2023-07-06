@@ -1,7 +1,6 @@
 package org.kraftwerk28.spigot_tg_bridge
 
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.runInterruptible
+import kotlinx.coroutines.*
 import org.bukkit.configuration.file.YamlConfiguration
 import java.io.File
 import java.nio.file.FileSystems
@@ -10,32 +9,56 @@ import org.kraftwerk28.spigot_tg_bridge.Constants as C
 
 class Configuration(plugin: Plugin) : YamlConfiguration() {
     val isEnabled: Boolean
+        get() = getBoolean("isEnabled", true)
     val logFromMCtoTG: Boolean
+        get() = getBoolean("logFromMCtoTG", true)
     val telegramFormat: String
+        get() = getString("telegramFormat", "<i>%username%</i>: %message%")!!
     val minecraftFormat: String
+        get() = getString("minecraftFormat", "<%username%>: %message%")!!
     val serverStartMessage: String?
+        get() = getString("serverStartMessage")
     val serverStopMessage: String?
+        get() = getString("serverStopMessage")
     val logJoinLeave: Boolean
+        get() = getBoolean("logJoinLeave", false)
     val joinString: String
+        get() = getString("strings.joined", "<i>%username%</i> joined.")!!
     val leaveString: String
+        get() = getString("strings.left", "<i>%username%</i> left.")!!
     val logDeath: Boolean
+        get() = getBoolean("logPlayerDeath", false)
     val logPlayerAsleep: Boolean
+        get() = getBoolean("logPlayerAsleep", false)
     val onlineString: String
+        get() = getString("strings.online", "Online")!!
     val nobodyOnlineString: String
+        get() = getString("strings.nobodyOnline", "Nobody online")!!
     val enableIgnAuth: Boolean
+        get() = getBoolean("enableIgnAuth", false)
     val silentMessages: Boolean?
+        get() = getBoolean("silentMessages").let { if (!it) null else true }
 
     // Telegram bot stuff
     val botToken: String
+        get() = getString("botToken") ?: throw Exception(C.WARN.noToken)
     val allowedChats: List<Long>
+        get() = getLongList("chats")
     val logFromTGtoMC: Boolean
+        get() = getBoolean("logFromTGtoMC", true)
     val allowWebhook: Boolean
+        get() = getBoolean("useWebhook", false)
     val webhookConfig: Map<String, Any>?
+        @Suppress("unchecked_cast")
+        get() = get("webhookConfig") as Map<String, Any>?
     val pollTimeout: Int
+        get() = getInt("pollTimeout", 30)
     val apiOrigin: String
+        get() = getString("apiOrigin", "https://api.telegram.org")!!
     val debugHttp: Boolean
+        get() = getBoolean("debugHttp", false)
 
-    var commands: BotCommands
+    val commands = BotCommands(this)
 
     init {
         val cfgFile = File(plugin.dataFolder, C.configFilename)
@@ -61,7 +84,7 @@ class Configuration(plugin: Plugin) : YamlConfiguration() {
                             events.find {
                                 it.kind() == StandardWatchEventKinds.ENTRY_MODIFY
                             }?.let {
-                                plugin.reload()
+                                plugin.restart()
                             }
                         } catch (e: Exception) {
                             when (e) {
@@ -80,6 +103,7 @@ class Configuration(plugin: Plugin) : YamlConfiguration() {
             }
         }
 
+        // Legacy convenience
         getString("minecraftMessageFormat")?.let {
             plugin.logger.warning(
                 """
@@ -92,6 +116,7 @@ class Configuration(plugin: Plugin) : YamlConfiguration() {
             plugin.saveConfig()
         }
 
+        // Legacy convenience
         getString("telegramMessageFormat")?.let {
             plugin.logger.warning(
                 """
@@ -103,47 +128,5 @@ class Configuration(plugin: Plugin) : YamlConfiguration() {
             set("telegramMessageFormat", null)
             plugin.saveConfig()
         }
-
-        isEnabled = getBoolean("enable", true)
-        serverStartMessage = getString("serverStartMessage")
-        serverStopMessage = getString("serverStopMessage")
-        logFromTGtoMC = getBoolean("logFromTGtoMC", true)
-        logFromMCtoTG = getBoolean("logFromMCtoTG", true)
-        telegramFormat = getString(
-            "telegramFormat",
-            "<i>%username%</i>: %message%",
-        )!!
-        minecraftFormat = getString(
-            "minecraftFormat",
-            "<%username%>: %message%",
-        )!!
-        // isEnabled = getBoolean("enable", true)
-        allowedChats = getLongList("chats")
-        enableIgnAuth = getBoolean("enableIgnAuth", false)
-
-        botToken = getString("botToken") ?: throw Exception(C.WARN.noToken)
-        allowWebhook = getBoolean("useWebhook", false)
-        @Suppress("unchecked_cast")
-        webhookConfig = get("webhookConfig") as Map<String, Any>?
-        pollTimeout = getInt("pollTimeout", 30)
-
-        logJoinLeave = getBoolean("logJoinLeave", false)
-        onlineString = getString("strings.online", "Online")!!
-        nobodyOnlineString = getString(
-            "strings.nobodyOnline",
-            "Nobody online",
-        )!!
-        joinString = getString(
-            "strings.joined",
-            "<i>%username%</i> joined.",
-        )!!
-        leaveString = getString("strings.left", "<i>%username%</i> left.")!!
-        logDeath = getBoolean("logPlayerDeath", false)
-        logPlayerAsleep = getBoolean("logPlayerAsleep", false)
-        commands = BotCommands(this)
-        // NB: Setting to null, if false, because API expects either `true` or absent parameter
-        silentMessages = getBoolean("silentMessages").let { if (!it) null else true }
-        apiOrigin = getString("apiOrigin", "https://api.telegram.org")!!
-        debugHttp = getBoolean("debugHttp", false)
     }
 }
