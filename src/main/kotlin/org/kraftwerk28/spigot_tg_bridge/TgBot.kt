@@ -89,7 +89,7 @@ class TgBot(
     }
 
     private fun initPolling() = plugin.launch {
-        loop@while (true) {
+        loop@ while (true) {
             try {
                 api.getUpdates(
                     offset = currentOffset,
@@ -124,19 +124,21 @@ class TgBot(
     }
 
     private suspend fun handleUpdate(update: Update) {
-        // Ignore private message or channel post
-        if (listOf("private", "channel").contains(update.message?.chat?.type))
+        // Accept only these chat types
+        if (!listOf("group", "supergroup").contains(update.message?.chat?.type))
             return
-        val ctx = HandlerContext(
-            update,
-            update.message,
-            update.message?.chat,
-        )
+
+        // Check whether the chat is white-listed in config
+        if (!config.allowedChats.contains(update.message?.chat?.id))
+            return
+
+        val ctx = HandlerContext(update, update.message, update.message?.chat)
         update.message?.text?.let {
             commandRegex?.matchEntire(it)?.groupValues?.let { matchList ->
-                commandMap[matchList[1]]?.run {
-                    val args = matchList[2].split("\\s+".toRegex())
-                    this(ctx.copy(commandArgs = args))
+                commandMap[matchList[1]]?.let { handler ->
+                    val commandArgs = matchList[2].split("""\s+""".toRegex())
+                    val handlerContext = ctx.copy(commandArgs = commandArgs)
+                    handler(handlerContext)
                 }
             } ?: run {
                 onTextHandler(ctx)
@@ -231,9 +233,9 @@ class TgBot(
             api.sendMessage(ctx.message!!.chat.id, "No linked users.")
         } else {
             val text = "<b>Linked users:</b>\n" +
-                linkedUsers.mapIndexed { i, dbUser ->
-                    "${i + 1}. ${dbUser.fullName()}"
-                }.joinToString("\n")
+                    linkedUsers.mapIndexed { i, dbUser ->
+                        "${i + 1}. ${dbUser.fullName()}"
+                    }.joinToString("\n")
             api.sendMessage(ctx.message!!.chat.id, text)
         }
     }

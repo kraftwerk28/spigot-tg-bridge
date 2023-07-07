@@ -5,10 +5,6 @@ import java.io.File
 import java.io.FileInputStream
 
 buildscript {
-    repositories {
-        mavenCentral()
-        maven("https://plugins.gradle.org/m2/")
-    }
     dependencies {
         classpath("org.yaml:snakeyaml:1.26")
         classpath("org.jlleitschuh.gradle:ktlint-gradle:10.1.0")
@@ -16,26 +12,25 @@ buildscript {
 }
 
 plugins {
-    id("org.jetbrains.kotlin.jvm") version "1.6.10"
-    id("com.github.johnrengelman.shadow") version "5.2.0"
+    id("org.jetbrains.kotlin.jvm") version "1.8.20"
+    id("com.github.johnrengelman.shadow") version "8.1.1"
     id("org.jlleitschuh.gradle.ktlint") version "10.1.0"
 }
 
-group = "org.kraftwerk28"
-
-val cfg: Map<String, String> = Yaml()
-    .load(FileInputStream("$projectDir/src/main/resources/plugin.yml"))
+val cfg: Map<String, String> = Yaml().run {
+    val pluginFile = FileInputStream("$projectDir/src/main/resources/plugin.yml")
+    load(pluginFile)
+}
 val pluginVersion = cfg.get("version")
 val spigotApiVersion = cfg.get("api-version")
 val retrofitVersion = "2.7.1"
+
+group = "org.kraftwerk28"
 version = pluginVersion as Any
 
 repositories {
     mavenCentral()
-    maven(
-        url = "https://hub.spigotmc.org/nexus/content/repositories/snapshots/"
-    )
-    maven(url = "https://jitpack.io")
+    maven(url = "https://hub.spigotmc.org/nexus/content/repositories/snapshots/")
     maven(url = "https://oss.sonatype.org/content/repositories/snapshots/")
 }
 
@@ -71,9 +66,10 @@ tasks {
         dependsOn("shadowJar")
         finalizedBy("copyArtifacts")
     }
+    withType<JavaCompile> {
+        sourceCompatibility = JavaVersion.VERSION_1_8.toString()
+    }
     withType<KotlinCompile> {
-        kotlinOptions {
-            jvmTarget = "1.8"
-        }
+        kotlinOptions.jvmTarget = "1.8"
     }
 }
