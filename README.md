@@ -89,3 +89,12 @@ This feature is related to [this issue](https://github.com/kraftwerk28/spigot-tg
 | Command | Description |
 |:-------:|:------------|
 | `tgbridge_reload` | Reload plugin configuration w/o need to stop the server. Works only through server console |
+
+## Development
+
+To build this plugin, run the following Gradle command:
+
+```bash
+# On Windows, replace ./gradlew with .\gradlew.bat
+./gradlew shadowJar
+```

@@ -26,3 +26,6 @@ build/
 .gradle/
 local.properties
 .idea/
+
+# Ensure the Gradle wrapper keeps working
+!gradle/wrapper/gradle-wrapper.jar
