@@ -16,6 +16,7 @@ logWhitelistKick: true
 minecraftFormat: "§6§l%username%§r (from §o%chat%§r): §b%message%§r"
 telegramFormat: "<i>%username%</i>: %message%"
 silentMessages: false
+escapeEmojis: true
 strings:
   online: "<b>Online</b>"
   nobodyOnline: "<b>Nobody online...😔</b>"
@@ -25,6 +26,12 @@ strings:
   goal: "<i>%username%</i> has completed the goal <b>%advancement%</b>.\n(<i>%description%</i>)"
   challenge: "<i>%username%</i> has completed the challenge <b>%advancement%</b>.\n(<i>%description%</i>)"
   death: "%deathMessage% 💀"
+  mediaMessage:
+    audio: "[🎵 Audio]"
+    photo: "[📸 Photo]"
+    video: "[🎥 Video]"
+    video_note: "[🎥 Video Note]"
+    voice: "[🎤 Voice]"
 commands:
   time: "time"
   online: "online"

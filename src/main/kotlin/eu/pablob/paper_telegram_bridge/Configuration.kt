@@ -30,6 +30,11 @@ class Configuration(plugin: Plugin) : YamlConfiguration() {
     val goalString: String
     val challengeString: String
     val deathString: String
+    val mediaMessagePhotoString: String
+    val mediaMessageVideoString: String
+    val mediaMessageAudioString: String
+    val mediaMessageVoiceString: String
+    val mediaMessageVideoNoteString: String
 
 
     // Telegram bot stuff
@@ -43,6 +48,7 @@ class Configuration(plugin: Plugin) : YamlConfiguration() {
     val pollTimeout: Int
     val apiOrigin: String
     val debugHttp: Boolean
+    val escapeEmojis: Boolean
 
     var commands: BotCommands
 
@@ -169,11 +175,17 @@ class Configuration(plugin: Plugin) : YamlConfiguration() {
                         "(<i>%description%</i>)"
             )!!
         deathString = getString("strings.death", "%deathMessage%")!!
+        mediaMessagePhotoString = getString("strings.mediaMessage.photo", "[📸 Photo]")!!
+        mediaMessageVideoString = getString("strings.mediaMessage.video", "[🎥 Video]")!!
+        mediaMessageAudioString = getString("strings.mediaMessage.audio", "[🎵 Audio]")!!
+        mediaMessageVoiceString = getString("strings.mediaMessage.voice", "[🎤 Voice]")!!
+        mediaMessageVideoNoteString = getString("strings.mediaMessage.video_note", "[🎥 Video Note]")!!
         commands = BotCommands(this)
         // NB: Setting to null, if false, because API expects either `true` or absent parameter
         silentMessages = getBoolean("silentMessages").let { if (!it) null else true }
         apiOrigin = getString("apiOrigin", "https://api.telegram.org")!!
         debugHttp = getBoolean("debugHttp", false)
+        escapeEmojis = getBoolean("escapeEmojis", true)
         admins = getLongList("admins")
     }
 }

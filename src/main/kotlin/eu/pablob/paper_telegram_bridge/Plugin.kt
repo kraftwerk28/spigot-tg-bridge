@@ -1,6 +1,8 @@
 package eu.pablob.paper_telegram_bridge
 
 import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.TextReplacementConfig
+import net.kyori.adventure.text.event.ClickEvent
 import org.bukkit.event.HandlerList
 import java.lang.Exception
 import eu.pablob.paper_telegram_bridge.Constants as C
@@ -70,9 +72,12 @@ class Plugin : AsyncJavaPlugin() {
         text: String,
         username: String? = null,
         chatTitle: String? = null,
+        clickableUrl: String? = null,
+        clickableText: String? = null,
+        escapeMessageEmoji: Boolean = true,
     ) = config?.run {
         minecraftFormat
-            .replace(C.MESSAGE_TEXT_PLACEHOLDER, text.escapeEmoji())
+            .replace(C.MESSAGE_TEXT_PLACEHOLDER, if (escapeMessageEmoji) text.escapeEmoji() else text)
             .run {
                 username?.let {
                     replace(C.USERNAME_PLACEHOLDER, it.escapeEmoji())
@@ -83,7 +88,17 @@ class Plugin : AsyncJavaPlugin() {
                     replace(C.CHAT_TITLE_PLACEHOLDER, it)
                 } ?: this
             }
-            .also { server.broadcast(Component.text(it)) }
+            .also { formatted ->
+                val message = clickableUrl?.let { url ->
+                    val label = clickableText ?: url
+                    val replacement = TextReplacementConfig.builder()
+                        .matchLiteral(label)
+                        .replacement(Component.text(label).clickEvent(ClickEvent.openUrl(url)))
+                        .build()
+                    Component.text(formatted).replaceText(replacement)
+                } ?: Component.text(formatted)
+                server.broadcast(message)
+            }
     }
 
     fun announceToTelegram(message: String, username: String? = null) {

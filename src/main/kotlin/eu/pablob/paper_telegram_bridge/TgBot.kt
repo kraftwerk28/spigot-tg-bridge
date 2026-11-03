@@ -152,6 +152,32 @@ class TgBot(
         if (message.chat.id !in config.allowedChats) return
 
         val ctx = HandlerContext(update, message, message.chat)
+        val mediaLabel = when {
+            message.photo != null -> config.mediaMessagePhotoString
+            message.video != null -> config.mediaMessageVideoString
+            message.audio != null -> config.mediaMessageAudioString
+            message.voice != null -> config.mediaMessageVoiceString
+            message.videoNote != null -> config.mediaMessageVideoNoteString
+            else -> null
+        }
+        if (mediaLabel != null) {
+            val chatId = message.chat.id.toString().removePrefix("-100")
+            // link to the message.
+            val link = "https://t.me/c/$chatId/${message.messageId}"
+            val caption = message.caption
+                ?.takeIf { it.isNotBlank() }
+                ?.let { " $it" }
+                .orEmpty()
+            onTextHandler(
+                ctx,
+                "$mediaLabel$caption",
+                clickableUrl = link,
+                clickableText = mediaLabel,
+                escapeMessageEmoji = false,
+            )
+            return
+        }
+
         val text = message.text ?: message.caption ?: return
         val commandMatch = message.text?.let { commandRegex?.matchEntire(it) }
         val commandHandler = commandMatch?.groupValues?.let { commandMap[it[1]] }
@@ -242,6 +268,9 @@ class TgBot(
     private fun onTextHandler(
         ctx: HandlerContext,
         text: String,
+        clickableUrl: String? = null,
+        clickableText: String? = null,
+        escapeMessageEmoji: Boolean = config.escapeEmojis,
     ) {
         val msg = ctx.message!!
         if (!config.logFromTGtoMC || msg.from == null)
@@ -250,6 +279,9 @@ class TgBot(
             text = text,
             username = msg.from.rawUserMention(),
             chatTitle = msg.chat.title,
+            clickableUrl = clickableUrl,
+            clickableText = clickableText,
+            escapeMessageEmoji = escapeMessageEmoji,
         )
     }
 
@@ -286,9 +318,6 @@ class TgBot(
             return
         }
         val wl = Whitelist(plugin)
-        // val notAdminText = "You aren't allowed to run this command."
-
-        println(msg.text)
         var text: String
         val parts = msg.text!!.split(" ")
         if (parts.size <= 1) {
@@ -326,7 +355,7 @@ class TgBot(
                 )
             } catch (e: HttpException) {
                 val errorBody = e.response()?.errorBody()?.string()
-                println("Telegram API error: $errorBody")
+                plugin.logger.warning("Telegram API error: $errorBody")
             }
         }
     }
@@ -415,7 +444,7 @@ class TgBot(
                 )
             } catch (e: HttpException) {
                 val errorBody = e.response()?.errorBody()?.string()
-                println("Telegram API error: $errorBody")
+                plugin.logger.warning("Telegram API error: $errorBody")
             }
         }
     }
@@ -464,7 +493,7 @@ class TgBot(
             )
         } catch (e: HttpException) {
             val errorBody = e.response()?.errorBody()?.string()
-            println("Telegram API error: $errorBody")
+            plugin.logger.warning("Telegram API error: $errorBody")
         }
     }
 

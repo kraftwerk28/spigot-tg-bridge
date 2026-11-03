@@ -37,7 +37,12 @@ data class Message(
     val caption: String? = null,
     @Name("reply_markup") val replyMarkup: InlineKeyboardMarkup? = null, // Inline keyboard attached to the message
     @Name("is_topic_message") val isTopicMessage: Boolean? = null,
-    @Name("message_thread_id") val messageThreadId: Long? = null
+    @Name("message_thread_id") val messageThreadId: Long? = null,
+    val photo: List<Any>? = null,
+    val video: Any? = null,
+    val audio: Any? = null,
+    val voice: Any? = null,
+    @Name("video_note") val videoNote: Any? = null,
 )
 
 data class Update(
