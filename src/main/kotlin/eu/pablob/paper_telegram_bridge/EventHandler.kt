@@ -29,7 +29,11 @@ class EventHandler(
         // Inventory
         if (message.contains("[") && message.contains("]")) {
             getLogInventory(message, player)
-        } else {
+        } else if (message.contains("xaero-waypoint:")) {
+            val username = player.name.fullEscape()
+            sendXaeroWaypointToTelegram(message, username)
+        }
+        else {
             sendMessage(message, player.name)
         }
     }
@@ -208,6 +212,26 @@ class EventHandler(
 
         // Return non-null contents
         return shulkerBox!!.inventory
+    }
+
+    private fun sendXaeroWaypointToTelegram(xaeroWaypointMessage: String = "xaero-waypoint:GUAYPOINT:G:12688:128:12094:0:false:0:Internal-the-nether", userName: String = "Unknown") {
+        // Example: xaero-waypoint:GUAYPOINT:G:12688:128:12094:0:false:0:Internal-the-nether
+        val waypointData = xaeroWaypointMessage.substringAfter("xaero-waypoint:").split(":")
+        val waypointName = waypointData[0]
+        val world = waypointData[8].replace("Internal-", "")
+        val x = waypointData[3]
+        val y = waypointData[4]
+        val z = waypointData[5]
+        val waypointMessage = config.waypointMessageString
+            .replace("%username%", userName)
+            .replace("%waypointName%", waypointName)
+            .replace("%world%", world)
+            .replace("%x%", x)
+            .replace("%y%", y)
+            .replace("%z%", z)
+            .replace("%raw%", xaeroWaypointMessage) // For debugging purposes.
+            .trimIndent()
+        sendMessage(waypointMessage)
     }
 
     private fun userMessageBeforeAfter(message: String, tag: String): Pair<String, String> {

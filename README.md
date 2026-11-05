@@ -124,7 +124,7 @@ This feature is related to [this issue](https://github.com/kraftwerk28/spigot-tg
 |      Command      | Description                                                                                |
 | :---------------: | :----------------------------------------------------------------------------------------- |
 | `tgbridge_reload` | Reload plugin configuration w/o need to stop the server. Works only through server console |
-|   `tgbroadcast`   | Broadcast a message to all Minecraft players and configured Telegram chats; usable by players, command blocks, and datapacks with the `bukkit.command.say` permission |
+|   `tgbroadcast`   | Broadcast a message to all Minecraft players and configured Telegram chats; usable by players and command blocks. |
 
 ## Permissions
 
@@ -154,9 +154,16 @@ This command is only available to users listed in the `admins` configuration fie
 
 ![whitelist example](img/whitelist.png)
 
+## Xaero's Map waypoint sharing
+When a player shares a waypoint from Xaero's Map mods, the plugin will send a formatted message with the waypoint details, including the waypoint name, world, and coordinates.
+
+![Waypoint sharing](img/waypoint.png)
+
+Accepted values: %username%, %waypointName%, %world%, %x%, %y%, %z% and %raw% (for debugging purposes).
+
 ## Minecraft assets (development-only)
 
-This repository won't include the minecraft icons required to build the plugin for the inventory and advancements rendering features.
+This repository won't include the Minecraft icons required to build the plugin for the inventory and advancements rendering features.
 This icons can be generated using the mod [IconExporter](https://github.com/CyclopsMC/IconExporter) and running in-game this command:
 
 ```
