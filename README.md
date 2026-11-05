@@ -159,6 +159,14 @@ When a player shares a waypoint from Xaero's Map mods, the plugin will send a fo
 
 ![Waypoint sharing](img/waypoint.png)
 
+The message is customizable in the configuration file. Example:
+
+```yaml
+strings:
+...
+  waypoint: "<i>%username%</i>: <b>%waypointName%</b> (%world%)\n<code>%x%, %y%, %z%</code>"
+```
+
 Accepted values: %username%, %waypointName%, %world%, %x%, %y%, %z% and %raw% (for debugging purposes).
 
 ## Minecraft assets (development-only)
