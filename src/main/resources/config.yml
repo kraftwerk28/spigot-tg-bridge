@@ -32,6 +32,7 @@ strings:
     video: "[🎥 Video]"
     video_note: "[🎥 Video Note]"
     voice: "[🎤 Voice]"
+  waypoint: "<i>%username%</i>: <b>%waypointName%</b> (%world%)\n<code>%x%, %y%, %z%</code>"
 commands:
   time: "time"
   online: "online"

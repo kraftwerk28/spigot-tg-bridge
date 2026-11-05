@@ -1,5 +1,5 @@
 name: PaperTelegramBridge
-version: "0.22.3"
+version: "0.22.4"
 api-version: "1.21.4"
 main: eu.pablob.paper_telegram_bridge.Plugin
 description: Telegram <-> Minecraft communication plugin for Paper/Spigot.
