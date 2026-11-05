@@ -84,10 +84,10 @@ Download from [modrinth](http://modrinth.com/plugin/paper-telegram-bridge), [han
 |  logPlayerAdvancement  | If true, plugin will send message to Telegram if player gets an advancement                      |       `boolean`        |        :x:         |          `true`          |
 |      logInventory      | If true, plugin will send image of inventory, item or ender chest [Read more](#Inventory)        |       `boolean`        |        :x:         |          `true`          |
 |    logWhitelistKick    | If true, plugin will send notification when a player is kicked due to not being whitelisted      |       `boolean`        |        :x:         |          `true`          |
-|        strings         | Dictionary of tokens - strings for plugin i18n                                                   | `Map<string, string>`  |        :x:         |    See default config    |
+|        strings         | Dictionary of tokens - strings for plugin i18n                                                   | `Map<string, string>`  |        :x:         |    [See default config](https://github.com/pbl0/paper-telegram-bridge/blob/master/src/main/resources/config.yml)    |
 |        commands        | Dictionary of command text used in Telegram bot                                                  | `Map<string, string>`  | :heavy_check_mark: |        See below         |
-| telegramMessageFormat  | Format string for TGtoMC chat message                                                            |        `string`        |        :x:         |    See default config    |
-| minecraftMessageFormat | Format string for MCtoTG chat message                                                            |        `string`        |        :x:         |    See default config    |
+| telegramMessageFormat  | Format string for TGtoMC chat message                                                            |        `string`        |        :x:         |    [See default config](https://github.com/pbl0/paper-telegram-bridge/blob/master/src/main/resources/config.yml)    |
+| minecraftMessageFormat | Format string for MCtoTG chat message                                                            |        `string`        |        :x:         |    [See default config](https://github.com/pbl0/paper-telegram-bridge/blob/master/src/main/resources/config.yml)    |
 |     silentMessages     | Disable notification in Telegram chats                                                           |       `boolean`        |        :x:         |          false           |
 |       apiOrigin        | Use different API endpoint for the bot                                                           |        `string`        |        :x:         | https://api.telegram.org |
 |   disableConfigWatch   | Do not watch the config for changes                                                              |        `string`        |        :x:         |          false           |
@@ -163,7 +163,6 @@ The message is customizable in the configuration file. Example:
 
 ```yaml
 strings:
-...
   waypoint: "<i>%username%</i>: <b>%waypointName%</b> (%world%)\n<code>%x%, %y%, %z%</code>"
 ```
 
