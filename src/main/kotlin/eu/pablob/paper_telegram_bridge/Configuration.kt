@@ -35,6 +35,7 @@ class Configuration(plugin: Plugin) : YamlConfiguration() {
     val mediaMessageAudioString: String
     val mediaMessageVoiceString: String
     val mediaMessageVideoNoteString: String
+    val waypointMessageString: String
 
 
     // Telegram bot stuff
@@ -180,6 +181,7 @@ class Configuration(plugin: Plugin) : YamlConfiguration() {
         mediaMessageAudioString = getString("strings.mediaMessage.audio", "[🎵 Audio]")!!
         mediaMessageVoiceString = getString("strings.mediaMessage.voice", "[🎤 Voice]")!!
         mediaMessageVideoNoteString = getString("strings.mediaMessage.video_note", "[🎥 Video Note]")!!
+        waypointMessageString = getString("strings.waypoint", "<i>%username%</i>: <b>%waypointName%</b> (%world%)\n<code>%x%, %y%, %z%</code>")!!
         commands = BotCommands(this)
         // NB: Setting to null, if false, because API expects either `true` or absent parameter
         silentMessages = getBoolean("silentMessages").let { if (!it) null else true }
