@@ -13,7 +13,7 @@ buildscript {
 
 plugins {
     id("org.jetbrains.kotlin.jvm") version "2.1.0"
-    id("com.github.johnrengelman.shadow") version "8.1.1"
+    id("com.gradleup.shadow") version "9.3.1"
     id("org.jlleitschuh.gradle.ktlint") version "10.1.0"
 }
 
@@ -31,7 +31,7 @@ version = pluginVersion as Any
 repositories {
     mavenCentral()
     maven(url = "https://oss.sonatype.org/content/repositories/snapshots/")
-    maven (url = "https://repo.papermc.io/repository/maven-public/")
+    maven(url = "https://repo.papermc.io/repository/maven-public/")
 }
 
 dependencies {
@@ -43,6 +43,7 @@ dependencies {
     implementation("com.squareup.okhttp3:logging-interceptor:4.2.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.0")
     implementation("com.vdurmont:emoji-java:5.1.1")
+    implementation("org.bstats:bstats-bukkit:3.2.1")
 }
 
 defaultTasks("shadowJar")
@@ -52,6 +53,8 @@ tasks {
         archiveFileName.set(
             "paper-telegram-bridge-$paperApiVersion-v$pluginVersion.jar"
         )
+        configurations = listOf(project.configurations.runtimeClasspath.get())
+        relocate("org.bstats", "${project.group}.bstats")
     }
     register("pack") {
         description = "[For development only!] Build project and copy .jar into servers directory"

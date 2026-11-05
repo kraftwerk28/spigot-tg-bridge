@@ -6,12 +6,14 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import org.bstats.bukkit.Metrics
 import org.bukkit.plugin.java.JavaPlugin
 
 open class AsyncJavaPlugin : JavaPlugin() {
     private val scope = CoroutineScope(Dispatchers.Default)
 
     override fun onEnable() {
+        Metrics(this, BSTATS_PLUGIN_ID)
         runBlocking { onEnableAsync() }
     }
 
@@ -27,4 +29,8 @@ open class AsyncJavaPlugin : JavaPlugin() {
     open suspend fun onDisableAsync() = Unit
 
     fun <T> launch(f: suspend () -> T) = scope.launch { f() }
+
+    companion object {
+        private const val BSTATS_PLUGIN_ID = 35155 // Replace with your actual bStats ID
+    }
 }
