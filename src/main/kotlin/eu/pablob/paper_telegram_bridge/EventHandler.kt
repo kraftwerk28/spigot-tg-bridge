@@ -219,9 +219,9 @@ class EventHandler(
         val waypointData = xaeroWaypointMessage.substringAfter("xaero-waypoint:").split(":")
         val waypointName = waypointData[0]
         val world = waypointData[8].replace("Internal-", "")
-        val x = waypointData[3]
-        val y = waypointData[4]
-        val z = waypointData[5]
+        val x = waypointData[2]
+        val y = waypointData[3]
+        val z = waypointData[4]
         val waypointMessage = config.waypointMessageString
             .replace("%username%", userName)
             .replace("%waypointName%", waypointName)
