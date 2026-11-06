@@ -3,6 +3,7 @@ package eu.pablob.paper_telegram_bridge
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.TextReplacementConfig
 import net.kyori.adventure.text.event.ClickEvent
+import org.bstats.bukkit.Metrics
 import org.bukkit.event.HandlerList
 import java.lang.Exception
 import eu.pablob.paper_telegram_bridge.Constants as C
@@ -22,11 +23,12 @@ class Plugin : AsyncJavaPlugin() {
 
     override suspend fun onEnableAsync() {
         try {
-            launch {
-                config = Configuration(this).also {
-                    initializeWithConfig(it)
-                }
+            val loadedConfig = Configuration(this)
+            config = loadedConfig
+            if (loadedConfig.metrics) {
+                Metrics(this, BSTATS_PLUGIN_ID)
             }
+            launch { initializeWithConfig(loadedConfig) }
         } catch (e: Exception) {
             // Configuration file is missing or incomplete
             logger.warning(e.message)
@@ -123,5 +125,9 @@ class Plugin : AsyncJavaPlugin() {
             }
             logger.info(C.INFO.RELOAD_COMPLETE)
         }
+    }
+
+    companion object {
+        private const val BSTATS_PLUGIN_ID = 35155
     }
 }

@@ -53,6 +53,8 @@ class Configuration(plugin: Plugin) : YamlConfiguration() {
 
     var commands: BotCommands
 
+    val metrics: Boolean
+
     init {
         val cfgFile = File(plugin.dataFolder, C.CONFIG_FILENAME)
         if (!cfgFile.exists()) {
@@ -189,5 +191,6 @@ class Configuration(plugin: Plugin) : YamlConfiguration() {
         debugHttp = getBoolean("debugHttp", false)
         escapeEmojis = getBoolean("escapeEmojis", true)
         admins = getLongList("admins")
+        metrics = getBoolean("metrics", true)
     }
 }

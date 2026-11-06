@@ -38,3 +38,4 @@ commands:
   online: "online"
   chat_id: "chat_id"
   whitelist: "whitelist"
+metrics: true
