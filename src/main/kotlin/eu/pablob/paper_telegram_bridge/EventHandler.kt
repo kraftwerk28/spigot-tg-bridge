@@ -65,12 +65,11 @@ class EventHandler(
         if (!config.logDeath) return
         val hasPermission = event.entity.hasPermission("tg-bridge.silentjoinleave")
         if (hasPermission) return
-        val deathMessage = event.deathMessage()?.let { PlainTextComponentSerializer.plainText().serialize(it) }
-        deathMessage.let {
-            val username = event.entity.playerProfile.name.toString().fullEscape()
-            val text = it!!.replace(username, "<i>$username</i>")
-            sendMessage(text)
-        }
+        val deathMessage = event.deathMessage()
+            ?.let { PlainTextComponentSerializer.plainText().serialize(it) }
+            ?: return
+        val text = config.deathString.replace("%deathMessage%", deathMessage.fullEscape())
+        sendMessage(text)
     }
 
     @EventHandler

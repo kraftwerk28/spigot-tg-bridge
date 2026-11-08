@@ -26,6 +26,7 @@ build/
 .gradle/
 local.properties
 .idea/
+bin/
 
 *.code-workspace
 

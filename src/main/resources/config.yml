@@ -25,7 +25,7 @@ strings:
   advancement: "<i>%username%</i> has made the advancement <b>%advancement%</b>.\n(<i>%description%</i>)"
   goal: "<i>%username%</i> has completed the goal <b>%advancement%</b>.\n(<i>%description%</i>)"
   challenge: "<i>%username%</i> has completed the challenge <b>%advancement%</b>.\n(<i>%description%</i>)"
-  death: "%deathMessage% 💀"
+  death: "<i>%deathMessage%</i>"
   mediaMessage:
     audio: "[🎵 Audio]"
     photo: "[📸 Photo]"
